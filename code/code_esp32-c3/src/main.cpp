@@ -11,6 +11,34 @@
 #define B8 7
 #define B9 6
 
+#define RXD1 21  
+#define TXD1 20   
+
+bool lastB0 = HIGH;
+bool lastB1 = HIGH;
+bool lastB2 = HIGH;
+bool lastB3 = HIGH;
+bool lastB4 = HIGH;
+bool lastB5 = HIGH;
+bool lastB6 = HIGH;
+bool lastB7 = HIGH;
+bool lastB8 = HIGH;
+bool lastB9 = HIGH;
+
+bool pressedStable(int pin) {
+  if (digitalRead(pin) == LOW) {
+    delay(10);
+    return digitalRead(pin) == LOW;
+  }
+  return false;
+}
+
+void sendCmd(const char* cmd) {
+  Serial.print("ESP sent: ");
+  Serial.println(cmd);
+  Serial1.println(cmd);
+}
+
 void setup() {
   pinMode(B0, INPUT_PULLUP);
   pinMode(B1, INPUT_PULLUP);
@@ -24,42 +52,60 @@ void setup() {
   pinMode(B9, INPUT_PULLUP);
 
   Serial.begin(115200);
-  delay(2000);
-  Serial.println("ESP32-C3 serial monitor works");
+
+  Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1);
 }
 
 void loop() {
 
+  bool b0 = digitalRead(B0);
+  bool b1 = digitalRead(B1);
+  bool b2 = digitalRead(B2);
+  bool b3 = digitalRead(B3);
+
   // For testing the Buttons, works so far
-  if(!digitalRead(B0)){
+  if(pressedStable(B0) && lastB0 == HIGH){
     Serial.println("Button 0");
-  }
-  if(!digitalRead(B1)){
-    Serial.println("Button 1");
-  }
-  if(!digitalRead(B2)){
-    Serial.println("Button 2");
-  }
-  if(!digitalRead(B3)){
-    Serial.println("Button 3");
-  }
+    // msg = "Beep\n";
+    sendCmd("Beep");
+  } 
+  if(pressedStable(B1) && lastB1 == HIGH){
+    Serial.println("Fuck 1");
+    // msg= "No Beep!\n";
+    sendCmd("No Beep!");
+  } 
+  if(pressedStable(B2) && lastB2 == HIGH){
+    Serial.println("Fuck 2");
+    // msg="Button0On\n";
+    sendCmd("Button0On");
+  } 
+  if(pressedStable(B3) && lastB3 == HIGH){
+    Serial.println("Fuck 3");
+    // msg="Button0Off\n";
+    sendCmd("Button0Off");
+  } 
   if(!digitalRead(B4)){
-    Serial.println("Button 4");
-  }
+    Serial.println("Fuck 4");
+  } 
   if(!digitalRead(B5)){
-    Serial.println("Button 5");
-  }
+    Serial.println("Fuck 5");
+  } 
   if(!digitalRead(B6)){
-    Serial.println("Button 6");
-  }
+    Serial.println("Fuck 6");
+  } 
   if(!digitalRead(B7)){
-    Serial.println("Button 7");
-  }
+    Serial.println("Fuck 7");
+  } 
   if(!digitalRead(B8)){
-    Serial.println("Button 8");
-  }
+    Serial.println("Fuck 8");
+  } 
   if(!digitalRead(B9)){
-    Serial.println("Button 9");
+    Serial.println("Fuck 9");
   }
+
+  lastB0 = b0;
+  lastB1 = b1;
+  lastB2 = b2;
+  lastB3 = b3;
 
 }

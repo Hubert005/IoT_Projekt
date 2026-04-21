@@ -11,8 +11,8 @@
 #define B8 7
 #define B9 6
 
-#define RXD1 21  
-#define TXD1 20   
+#define RXD1 21
+#define TXD1 20
 
 bool lastB0 = HIGH;
 bool lastB1 = HIGH;
@@ -37,6 +37,14 @@ void sendCmd(const char* cmd) {
   Serial.print("ESP sent: ");
   Serial.println(cmd);
   Serial1.println(cmd);
+}
+
+void sendBLE(String cmd){
+
+}
+
+String recvBLE(){
+
 }
 
 void setup() {

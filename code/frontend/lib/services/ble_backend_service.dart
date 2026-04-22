@@ -1,6 +1,5 @@
 import '../models/gesture.dart';
 import '../models/round_result.dart';
-import 'backend_service.dart';
 import 'ble_service.dart';
 
 // ESP encodes gestures as integers: 0=rock, 1=paper, 2=scissors
@@ -13,11 +12,10 @@ Gesture _parse(int v) => switch (v) {
 /// Receives round results via BLE in the format "runde_x_y_z":
 ///   x = round number, y = P1 gesture, z = P2 gesture.
 /// Responds with "runde_ok" after each round.
-class BleBackendService implements BackendService {
+class BleBackendService {
   final BleService _ble;
   BleBackendService([BleService? ble]) : _ble = ble ?? BleService.instance;
 
-  @override
   Future<RoundResult> getRoundResult(int round) async {
     final msg = await _ble.waitForMessage('runde_');
     final parts = msg.split('_');

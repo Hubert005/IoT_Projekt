@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
-import '../../services/backend_service.dart';
 import '../../services/ble_backend_service.dart';
 import '../../services/ble_mixer_service.dart';
-import '../../services/ble_service.dart';
 import '../../services/drink_service.dart';
-import '../../services/mixer_service.dart';
 import 'components/photo_capture_header.dart';
 import 'components/photo_capture_start_button.dart';
 import 'components/photo_capture_step_indicator.dart';
@@ -49,15 +46,8 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
   void _startGame() {
     if (_p1Path == null || _p2Path == null) return;
 
-    final BackendService backend;
-    final MixerService mixer;
-    if (BleService.instance.isConnected) {
-      backend = BleBackendService();
-      mixer   = BleMixerService();
-    } else {
-      backend = MockBackendService();
-      mixer   = MockMixerService();
-    }
+    final backend = BleBackendService();
+    final mixer = BleMixerService();
 
     Navigator.pushReplacement(
       context,

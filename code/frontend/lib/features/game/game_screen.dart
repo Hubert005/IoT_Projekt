@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iot_drink_mixer/core/theme/app_colors.dart';
 import '../../models/drink.dart';
 import '../../models/round_result.dart';
-import '../../services/backend_service.dart';
+import '../../services/ble_backend_service.dart';
 import '../../services/ble_service.dart';
 import '../../services/drink_service.dart';
 import '../../services/mixer_service.dart';
@@ -16,7 +16,7 @@ import 'widgets/series_stats_card.dart';
 class GameScreen extends StatefulWidget {
   final String player1ImagePath;
   final String player2ImagePath;
-  final BackendService backend;
+  final BleBackendService backend;
   final DrinkService drinkService;
   final MixerService mixerService;
 

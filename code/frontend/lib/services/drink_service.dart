@@ -16,21 +16,25 @@ class MockDrinkService implements DrinkService {
       id: 'tropical_chaos',
       name: 'Tropical Chaos',
       ingredients: 'Mango, Ananas, Chili-Sirup & Soda',
+      pumpAmounts: [30, 20, 10, 40],
     ),
     Drink(
       id: 'sour_loser',
       name: 'Sour Loser',
       ingredients: 'Zitrone, Himbeere, Ingwer & Tonic',
+      pumpAmounts: [20, 30, 20, 30],
     ),
     Drink(
       id: 'blue_regret',
       name: 'Blue Regret',
       ingredients: 'Blaubeere, Limette, Minze & Sprudelwasser',
+      pumpAmounts: [10, 40, 30, 20],
     ),
     Drink(
       id: 'bitter_defeat',
       name: 'Bitter Defeat',
       ingredients: 'Grapefruit, Rosmarin, Honig & Soda',
+      pumpAmounts: [40, 10, 10, 40],
     ),
   ];
 
@@ -43,17 +47,3 @@ class MockDrinkService implements DrinkService {
     return _drinks[DateTime.now().second % _drinks.length];
   }
 }
-
-// ── Real implementation stub ───────────────────────────────────────────────
-// class AiDrinkService implements DrinkService {
-//   @override
-//   Future<Drink> selectDrink({required int loserPlayer, required String loserImagePath}) async {
-//     final bytes = await File(loserImagePath).readAsBytes();
-//     final res = await http.post(
-//       Uri.parse('http://mixer.local/ai/drink'),
-//       body: {'player': '$loserPlayer', 'photo': base64Encode(bytes)},
-//     );
-//     final data = jsonDecode(res.body);
-//     return Drink(id: data['id'], name: data['name'], ingredients: data['ingredients']);
-//   }
-// }

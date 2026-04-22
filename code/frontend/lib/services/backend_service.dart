@@ -23,17 +23,3 @@ class MockBackendService implements BackendService {
     return RoundResult(round: round, p1: p1, p2: p2);
   }
 }
-
-// ── Real implementation stub ───────────────────────────────────────────────
-// class HttpBackendService implements BackendService {
-//   @override
-//   Future<RoundResult> getRoundResult(int round) async {
-//     final res = await http.get(Uri.parse('http://mixer.local/round/$round'));
-//     final data = jsonDecode(res.body);
-//     return RoundResult(
-//       round: round,
-//       p1: Gesture.values.byName(data['p1']),
-//       p2: Gesture.values.byName(data['p2']),
-//     );
-//   }
-// }

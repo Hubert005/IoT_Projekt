@@ -17,6 +17,13 @@ abstract class AppTextStyles {
     height: 1.3,
   );
 
+  static const TextStyle headingUltraLarge = TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.w800,
+    color: AppColors.textTitelHeader,
+    height: 1.3,
+  );
+
   static const TextStyle headingMedium = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,

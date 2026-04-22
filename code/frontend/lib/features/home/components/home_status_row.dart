@@ -4,29 +4,39 @@ import '../../../core/theme/app_colors.dart';
 import 'status_card.dart';
 
 class HomeStatusRow extends StatelessWidget {
-  const HomeStatusRow({super.key});
+  final bool bleConnected;
+  final String? bleDeviceName;
+  final VoidCallback? onBleTap;
+
+  const HomeStatusRow({
+    super.key,
+    this.bleConnected = false,
+    this.bleDeviceName,
+    this.onBleTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       children: [
+        const SizedBox(width: 36),
         Expanded(
-          child: StatusCard(
-            title: 'WIFI NETWORK',
-            value: 'Connected',
-            valueColor: AppColors.success,
-            trailingIcon: Icons.wifi_rounded,
+          child: GestureDetector(
+            onTap: onBleTap,
+            child: StatusCard(
+              title: 'BLE STATUS',
+              value: bleConnected
+                  ? (bleDeviceName ?? 'Verbunden')
+                  : 'Tippen zum Verbinden',
+              valueColor: bleConnected ? AppColors.success : AppColors.textPrimary,
+              showDot: bleConnected,
+              trailingIcon: bleConnected
+                  ? Icons.bluetooth_connected
+                  : Icons.bluetooth,
+            ),
           ),
         ),
-        SizedBox(width: 12),
-        Expanded(
-          child: StatusCard(
-            title: 'MACHINE STATUS',
-            value: 'Online',
-            valueColor: AppColors.textPrimary,
-            showDot: true,
-          ),
-        ),
+        const SizedBox(width: 36),
       ],
     );
   }

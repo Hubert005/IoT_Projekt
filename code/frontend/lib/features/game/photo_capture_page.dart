@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/backend_service.dart';
+import '../../services/ble_backend_service.dart';
+import '../../services/ble_mixer_service.dart';
+import '../../services/ble_service.dart';
 import '../../services/drink_service.dart';
 import '../../services/mixer_service.dart';
 import 'components/photo_capture_header.dart';
@@ -45,17 +48,27 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
 
   void _startGame() {
     if (_p1Path == null || _p2Path == null) return;
+
+    final BackendService backend;
+    final MixerService mixer;
+    if (BleService.instance.isConnected) {
+      backend = BleBackendService();
+      mixer   = BleMixerService();
+    } else {
+      backend = MockBackendService();
+      mixer   = MockMixerService();
+    }
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder:
-            (_) => GameScreen(
-              player1ImagePath: _p1Path!,
-              player2ImagePath: _p2Path!,
-              backend: MockBackendService(),
-              drinkService: MockDrinkService(),
-              mixerService: MockMixerService(),
-            ),
+        builder: (_) => GameScreen(
+          player1ImagePath: _p1Path!,
+          player2ImagePath: _p2Path!,
+          backend: backend,
+          drinkService: MockDrinkService(),
+          mixerService: mixer,
+        ),
       ),
     );
   }

@@ -20,6 +20,7 @@ abstract class AppColors {
   static const Color textSecondary = Color(0xFF8FA5C0);
   static const Color textTertiary = Color(0xFF6B7F95);
   static const Color textHint = Color(0xFFBDC3C7);
+  static const Color textTitelHeader = Color(0xFF1A5FBF);
 
   static const Color progressTrack = Color(0xFF33465D);
   static const Color divider = Color(0xFFE0E0E0);

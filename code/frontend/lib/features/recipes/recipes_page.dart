@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:iot_drink_mixer/core/theme/app_colors.dart';
 import 'data/recipe_catalog.dart';
 import 'models/recipe_models.dart';
 import 'widgets/featured_recipe_card.dart';
+import 'widgets/recipe_detail_sheet.dart';
 import 'widgets/recipe_filter_bar.dart';
 import 'widgets/recipe_search_field.dart';
 import 'widgets/recipe_tile.dart';
@@ -14,28 +16,6 @@ class RecipesPage extends StatefulWidget {
 }
 
 enum _RecipeFilter { all, available, favorites }
-
-enum _RecipeStatus { ready, lowStock, refillRequired }
-
-class _RecipeItem {
-  final String name;
-  final String subtitle;
-  final String volumeAndTime;
-  final _RecipeStatus status;
-  final bool aiRecommended;
-  final bool favorite;
-  final String imageUrl;
-
-  const _RecipeItem({
-    required this.name,
-    required this.subtitle,
-    required this.volumeAndTime,
-    required this.status,
-    required this.aiRecommended,
-    required this.favorite,
-    required this.imageUrl,
-  });
-}
 
 class _RecipesPageState extends State<RecipesPage> {
   final TextEditingController _searchController = TextEditingController();
@@ -60,7 +40,8 @@ class _RecipesPageState extends State<RecipesPage> {
       final matchesQuery =
           query.isEmpty ||
           recipe.name.toLowerCase().contains(query) ||
-          recipe.subtitle.toLowerCase().contains(query);
+          recipe.subtitle.toLowerCase().contains(query) ||
+          recipe.mixSummary.toLowerCase().contains(query);
 
       return matchesFilter && matchesQuery;
     }).toList();
@@ -89,15 +70,33 @@ class _RecipesPageState extends State<RecipesPage> {
                 itemBuilder: (context, index) {
                   final recipe = recipes[index];
                   if (index == 0) {
-                    return FeaturedRecipeCard(recipe: recipe);
+                    return FeaturedRecipeCard(
+                      recipe: recipe,
+                      onTap: () => _openRecipeDetails(recipe),
+                    );
                   }
-                  return RecipeTile(recipe: recipe);
+                  return RecipeTile(
+                    recipe: recipe,
+                    onTap: () => _openRecipeDetails(recipe),
+                  );
                 },
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _openRecipeDetails(RecipeItem recipe) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => RecipeDetailSheet(recipe: recipe),
     );
   }
 }

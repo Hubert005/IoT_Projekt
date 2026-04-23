@@ -1,10 +1,10 @@
-import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:http/http.dart' as http;
 import 'package:iot_drink_mixer/core/theme/app_text_styles.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_colors.dart';
-import '../../services/ble_service.dart';
 import '../game/photo_capture_page.dart';
 import '../recipes/recipes_page.dart';
 import 'components/bottom_nav_item.dart';
@@ -20,30 +20,73 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static const String _prefsBaseUrlKey = 'wifi_base_url';
+  static const String _defaultBaseUrl = 'http://192.168.178.50';
+
   int _navIndex = 0;
-  bool _bleConnected = false;
-  String? _bleDeviceName;
-  StreamSubscription<bool>? _connSub;
+  String _baseUrl = _defaultBaseUrl;
+  String _wifiInfo = 'Tippen zum Einrichten';
+  bool _wifiConnected = false;
 
   @override
   void initState() {
     super.initState();
-    _bleConnected = BleService.instance.isConnected;
-    _bleDeviceName = BleService.instance.deviceName;
-    _connSub = BleService.instance.connectionStream.listen((connected) {
-      if (mounted) {
-        setState(() {
-          _bleConnected = connected;
-          _bleDeviceName = connected ? BleService.instance.deviceName : null;
-        });
-      }
+    _loadAndCheckWifi();
+  }
+
+  Future<void> _loadAndCheckWifi() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_prefsBaseUrlKey);
+    if (saved != null && saved.isNotEmpty) {
+      _baseUrl = saved;
+    }
+
+    final ok = await _ping(_baseUrl);
+    if (!mounted) return;
+
+    setState(() {
+      _wifiConnected = ok;
+      _wifiInfo = ok ? 'Verbunden: $_baseUrl' : 'Nicht erreichbar: $_baseUrl';
     });
   }
 
-  @override
-  void dispose() {
-    _connSub?.cancel();
-    super.dispose();
+  Future<bool> _ping(String baseUrl) async {
+    try {
+      final root = Uri.parse(baseUrl);
+      final uri = root.replace(path: '/api/ping');
+      final res = await http.get(uri).timeout(const Duration(seconds: 4));
+      if (res.statusCode < 200 || res.statusCode >= 300) return false;
+      final body = jsonDecode(res.body);
+      return body is Map<String, dynamic> && body['ok'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _configureWifi() async {
+    final value = await showDialog<String>(
+      context: context,
+      builder: (_) => _WifiConfigDialog(initialUrl: _baseUrl),
+    );
+
+    if (value == null || value.isEmpty) return;
+
+    final ok = await _ping(value);
+    if (!mounted) return;
+
+    setState(() {
+      _baseUrl = value;
+      _wifiConnected = ok;
+      _wifiInfo = ok ? 'Verbunden: $value' : 'Nicht erreichbar: $value';
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsBaseUrlKey, value);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? 'WLAN verbunden' : 'IP gespeichert, aber /api/ping nicht erreichbar')),
+    );
   }
 
   // ── Build ──────────────────────────────────────────────────────────────
@@ -77,30 +120,14 @@ class _HomePageState extends State<HomePage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: HomeStatusRow(
-            bleConnected: _bleConnected,
-            bleDeviceName: _bleDeviceName,
-            onBleTap: _showBleScanSheet,
+            wifiInfo: _wifiInfo,
+            connected: _wifiConnected,
+            onTap: _configureWifi,
           ),
         ),
         const SizedBox(height: 16),
         const Expanded(child: NextActionCard()),
         const SizedBox(height: 28),
-        if (!_bleConnected)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-            child: OutlinedButton.icon(
-              onPressed: () {
-                BleService.instance.enableTestMode();
-              },
-              icon: const Icon(Icons.bug_report, size: 16),
-              label: const Text('Test Modus (ohne ESP32)'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white38,
-                side: const BorderSide(color: Colors.white12),
-                minimumSize: const Size.fromHeight(40),
-              ),
-            ),
-          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: StartGameButton(
@@ -112,20 +139,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ],
     );
-  }
-
-  // ── BLE Scan Sheet ──────────────────────────────────────────────────────
-
-  void _showBleScanSheet() {
-    BleService.instance.startScan();
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => const _BleScanSheet(),
-    ).whenComplete(BleService.instance.stopScan);
   }
 
   // ── Bottom Nav ──────────────────────────────────────────────────────────
@@ -158,134 +171,53 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// ── BLE Scan Bottom Sheet ─────────────────────────────────────────────────────
+class _WifiConfigDialog extends StatefulWidget {
+  final String initialUrl;
 
-class _BleScanSheet extends StatefulWidget {
-  const _BleScanSheet();
+  const _WifiConfigDialog({required this.initialUrl});
 
   @override
-  State<_BleScanSheet> createState() => _BleScanSheetState();
+  State<_WifiConfigDialog> createState() => _WifiConfigDialogState();
 }
 
-class _BleScanSheetState extends State<_BleScanSheet> {
-  String? _connectingId;
+class _WifiConfigDialogState extends State<_WifiConfigDialog> {
+  late final TextEditingController _controller;
 
-  Future<void> _connect(BluetoothDevice device) async {
-    setState(() => _connectingId = device.remoteId.str);
-    try {
-      await BleService.instance.connect(device);
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        setState(() => _connectingId = null);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Verbindung fehlgeschlagen: $e')),
-        );
-      }
-    }
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialUrl);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  'BLE Gerät verbinden',
-                  style: AppTextStyles.labelMedium.copyWith(fontSize: 16),
-                ),
-                const Spacer(),
-                StreamBuilder<bool>(
-                  stream: BleService.instance.isScanning,
-                  builder: (_, snap) {
-                    if (snap.data ?? false) {
-                      return const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.success,
-                        ),
-                      );
-                    }
-                    return TextButton(
-                      onPressed: BleService.instance.startScan,
-                      child: const Text('Neu scannen'),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            StreamBuilder<List<ScanResult>>(
-              stream: BleService.instance.scanResults,
-              builder: (_, snap) {
-                final results = snap.data ?? [];
-                if (results.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(
-                      child: Text(
-                        'Suche nach BLE-Geräten…',
-                        style: TextStyle(color: Colors.white54),
-                      ),
-                    ),
-                  );
-                }
-                return ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 260),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: results.length,
-                    itemBuilder: (_, i) {
-                      final device = results[i].device;
-                      final name = device.platformName.isNotEmpty
-                          ? device.platformName
-                          : device.remoteId.str;
-                      final connecting = _connectingId == device.remoteId.str;
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.bluetooth, color: AppColors.success),
-                        title: Text(name, style: const TextStyle(color: Colors.white)),
-                        subtitle: Text(
-                          device.remoteId.str,
-                          style: const TextStyle(color: Colors.white54, fontSize: 11),
-                        ),
-                        trailing: connecting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : null,
-                        onTap: connecting ? null : () => _connect(device),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-            if (BleService.instance.isConnected) ...[
-              const Divider(color: Colors.white12),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.bluetooth_disabled, color: Colors.redAccent),
-                title: const Text('Trennen', style: TextStyle(color: Colors.redAccent)),
-                onTap: () async {
-                  await BleService.instance.disconnect();
-                  if (mounted) Navigator.pop(context);
-                },
-              ),
-            ],
-          ],
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: const Text('Arduino WLAN Adresse', style: TextStyle(color: Colors.white)),
+      content: TextField(
+        controller: _controller,
+        style: const TextStyle(color: Colors.white),
+        decoration: const InputDecoration(
+          hintText: 'http://192.168.178.50',
+          hintStyle: TextStyle(color: Colors.white38),
         ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Abbrechen'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          child: const Text('Speichern & Testen'),
+        ),
+      ],
     );
   }
 }

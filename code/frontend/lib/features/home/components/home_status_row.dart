@@ -4,15 +4,15 @@ import '../../../core/theme/app_colors.dart';
 import 'status_card.dart';
 
 class HomeStatusRow extends StatelessWidget {
-  final bool bleConnected;
-  final String? bleDeviceName;
-  final VoidCallback? onBleTap;
+  final String wifiInfo;
+  final bool connected;
+  final VoidCallback? onTap;
 
   const HomeStatusRow({
     super.key,
-    this.bleConnected = false,
-    this.bleDeviceName,
-    this.onBleTap,
+    this.wifiInfo = 'Arduino IP automatisch abgefragt',
+    this.connected = false,
+    this.onTap,
   });
 
   @override
@@ -22,17 +22,13 @@ class HomeStatusRow extends StatelessWidget {
         const SizedBox(width: 36),
         Expanded(
           child: GestureDetector(
-            onTap: onBleTap,
+            onTap: onTap,
             child: StatusCard(
-              title: 'BLE STATUS',
-              value: bleConnected
-                  ? (bleDeviceName ?? 'Verbunden')
-                  : 'Tippen zum Verbinden',
-              valueColor: bleConnected ? AppColors.success : AppColors.textPrimary,
-              showDot: bleConnected,
-              trailingIcon: bleConnected
-                  ? Icons.bluetooth_connected
-                  : Icons.bluetooth,
+              title: 'WLAN STATUS',
+              value: wifiInfo,
+              valueColor: connected ? AppColors.success : AppColors.textPrimary,
+              showDot: connected,
+              trailingIcon: connected ? Icons.wifi : Icons.wifi_off,
             ),
           ),
         ),

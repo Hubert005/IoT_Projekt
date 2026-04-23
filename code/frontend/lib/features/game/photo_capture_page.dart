@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_colors.dart';
-import '../../services/ble_backend_service.dart';
-import '../../services/ble_mixer_service.dart';
+import '../../services/backend_service.dart';
 import '../../services/drink_service.dart';
+import '../../services/mixer_service.dart';
+import '../../services/wifi_backend_service.dart';
+import '../../services/wifi_mixer_service.dart';
 import 'components/photo_capture_header.dart';
 import 'components/photo_capture_start_button.dart';
 import 'components/photo_capture_step_indicator.dart';
@@ -18,9 +21,33 @@ class PhotoCapturePage extends StatefulWidget {
 }
 
 class _PhotoCapturePageState extends State<PhotoCapturePage> {
+  static const String _prefsBaseUrlKey = 'wifi_base_url';
+  static const String _defaultBaseUrl = 'http://192.168.178.50';
+
   String? _p1Path;
   String? _p2Path;
   bool _isCapturing = false;
+  String _lastBaseUrl = _defaultBaseUrl;
+  bool _hasSavedBaseUrl = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedBaseUrl();
+  }
+
+  Future<void> _loadSavedBaseUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_prefsBaseUrlKey);
+    if (saved != null && saved.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _lastBaseUrl = saved;
+          _hasSavedBaseUrl = true;
+        });
+      }
+    }
+  }
 
   Future<void> _capturePhoto(int player) async {
     setState(() => _isCapturing = true);
@@ -43,11 +70,21 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     }
   }
 
-  void _startGame() {
+  Future<void> _startGame() async {
     if (_p1Path == null || _p2Path == null) return;
 
-    final backend = BleBackendService();
-    final mixer = BleMixerService();
+    late final BackendService backend;
+    late final MixerService mixer;
+
+    String? baseUrl;
+    if (_hasSavedBaseUrl) {
+      baseUrl = _lastBaseUrl;
+    } else {
+      baseUrl = await _askWifiBaseUrl();
+    }
+    if (!mounted || baseUrl == null || baseUrl.isEmpty) return;
+    backend = WifiBackendService(baseUrl: baseUrl);
+    mixer = WifiMixerService(baseUrl: baseUrl);
 
     Navigator.pushReplacement(
       context,
@@ -61,6 +98,46 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
         ),
       ),
     );
+  }
+
+  Future<String?> _askWifiBaseUrl() async {
+    final controller = TextEditingController(text: _lastBaseUrl);
+    final value = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Arduino WLAN Adresse', style: TextStyle(color: Colors.white)),
+          content: TextField(
+            controller: controller,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'http://192.168.178.50',
+              hintStyle: TextStyle(color: Colors.white38),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Abbrechen'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+              child: const Text('Weiter'),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+
+    if (value != null && value.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefsBaseUrlKey, value);
+      if (mounted) setState(() => _lastBaseUrl = value);
+    }
+
+    return value;
   }
 
   @override

@@ -1,0 +1,117 @@
+{
+  "@@locale": "en",
+
+  "appHeading": "Brain Cell Massacre",
+
+  "navHome": "HOME",
+  "navRecipe": "RECIPE",
+
+  "wifiStatus": "WIFI STATUS",
+  "wifiInfoDefault": "Tap to configure",
+  "wifiConnected": "Connected: {url}",
+  "@wifiConnected": {
+    "placeholders": {
+      "url": { "type": "String" }
+    }
+  },
+  "wifiNotReachable": "Not reachable: {url}",
+  "@wifiNotReachable": {
+    "placeholders": {
+      "url": { "type": "String" }
+    }
+  },
+  "wifiConnectedSnackbar": "WiFi connected",
+  "wifiIpSavedNotReachable": "IP saved, but /api/ping not reachable",
+
+  "dialogWifiTitle": "Arduino WiFi Address",
+  "dialogCancel": "Cancel",
+  "dialogSaveAndTest": "Save & Test",
+  "dialogContinue": "Continue",
+
+  "nextAction": "NEXT ACTION",
+  "nextActionTitle": "Place cup and start game",
+  "nextActionDescription": "After starting, both players take a photo. Then the Rock-Paper-Scissors game begins – the result comes live from the Arduino. The loser automatically gets their drink mixed. Progress is shown live on the screen.",
+
+  "startGame": "START GAME",
+  "startGameAction": "START GAME",
+
+  "photoCaptureTitle": "Take Photos",
+  "takePhoto": "Take photo",
+  "photoReady": "Photo ready ✓",
+  "noPhoto": "No photo yet",
+
+  "playerLabel": "Player {n}",
+  "@playerLabel": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+
+  "seriesStats": "SERIES STATS  •  BEST OF {n}",
+  "@seriesStats": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "roundXofY": "Round {current} of {total}",
+  "@roundXofY": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "player1Label": "PLAYER 1",
+  "player2Label": "PLAYER 2",
+
+  "gameResultHeading": "Game Result",
+  "waitingForRound": "WAITING FOR ROUND {n} \u2026",
+  "@waitingForRound": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "resultRound": "RESULT ROUND {n}",
+  "@resultRound": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "gameResultTitle": "GAME RESULT",
+  "drinkSelectingStatus": "DETERMINING DRINK \u2026",
+  "drinkSendingStatus": "SENDING TO MIXER \u2026",
+  "drinkReadyStatus": "DRINK CONFIRMED",
+
+  "badgeWinner": "WINNER",
+  "badgeLoser": "LOSER",
+  "badgeVictor": "VICTOR",
+  "badgeFocusTarget": "FOCUS TARGET",
+  "waitingLabel": "WAITING \u2026",
+
+  "drinkDetermining": "Determining drink \u2026",
+  "drinkDeterminingDesc": "Loser gets their special drink",
+  "aiAnalyzingPhoto": "AI analyzing loser photo \u2026",
+  "drinkBeingSelected": "Drink being selected",
+  "drinkMixing": "Mixing drink \u2026",
+  "drinkSentToMixer": "Sent to mixer",
+  "drinkBeingPrepared": "Your drink is being prepared!",
+  "placeUnderSensor": "Place cup under light sensor, then pumping starts.",
+  "backToStart": "BACK TO START",
+
+  "filterAll": "All",
+  "filterAvailable": "Available",
+  "filterFavorites": "Favorites",
+  "searchHint": "Search recipes...",
+  "aiRecommended": "AI RECOMMENDED",
+  "totalVolume": "Total: {ml} ml",
+  "@totalVolume": {
+    "placeholders": {
+      "ml": { "type": "int" }
+    }
+  },
+  "close": "Close",
+  "mixDetails": "Mix Details",
+  "statusReady": "READY",
+  "statusLowStock": "LOW STOCK",
+  "statusRefill": "REFILL",
+  "craft": "Craft"
+}

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/gesture.dart';
@@ -28,6 +28,7 @@ class PlayerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       decoration: BoxDecoration(
@@ -37,16 +38,15 @@ class PlayerCard extends StatelessWidget {
           color: isWinner ? AppColors.primary : AppColors.border,
           width: isWinner ? 2 : 1,
         ),
-        boxShadow:
-            isWinner
-                ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.22),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ]
-                : null,
+        boxShadow: isWinner
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.22),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ]
+            : null,
       ),
       child: Column(
         children: [
@@ -57,7 +57,7 @@ class PlayerCard extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.only(left: isLoser ? 10 : 0, right: isWinner ? 10 : 0),
                 child: _Badge(
-                  label: isWinner ? 'WINNER' : 'LOSER',
+                  label: isWinner ? l10n.badgeWinner : l10n.badgeLoser,
                   color: isWinner ? AppColors.primary : AppColors.error,
                 ),
               ),
@@ -109,7 +109,7 @@ class PlayerCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 if (gameOver)
                   Text(
-                    isWinner ? 'VICTOR' : 'FOCUS TARGET',
+                    isWinner ? l10n.badgeVictor : l10n.badgeFocusTarget,
                     style: AppTextStyles.captionSmall.copyWith(
                       color: isWinner ? AppColors.textPrimary : AppColors.error,
                       fontWeight: FontWeight.w700,
@@ -118,7 +118,7 @@ class PlayerCard extends StatelessWidget {
                   )
                 else if (waiting)
                   Text(
-                    'WARTE …',
+                    l10n.waitingLabel,
                     style: AppTextStyles.captionSmall.copyWith(
                       color: AppColors.textTertiary,
                       letterSpacing: 0.5,
@@ -154,14 +154,13 @@ class _Photo extends StatelessWidget {
           fit: BoxFit.cover,
           width: double.infinity,
           filterQuality: FilterQuality.high,
-          errorBuilder:
-              (_, __, ___) => Center(
-                child: Icon(
-                  Icons.person_rounded,
-                  size: 72,
-                  color: AppColors.textTertiary.withValues(alpha: 0.5),
-                ),
-              ),
+          errorBuilder: (_, __, ___) => Center(
+            child: Icon(
+              Icons.person_rounded,
+              size: 72,
+              color: AppColors.textTertiary.withValues(alpha: 0.5),
+            ),
+          ),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_colors.dart';
@@ -101,13 +102,15 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
   }
 
   Future<String?> _askWifiBaseUrl() async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: _lastBaseUrl);
     final value = await showDialog<String>(
       context: context,
       builder: (ctx) {
+        final ctxL10n = AppLocalizations.of(ctx)!;
         return AlertDialog(
           backgroundColor: AppColors.surface,
-          title: const Text('Arduino WLAN Adresse', style: TextStyle(color: Colors.white)),
+          title: Text(ctxL10n.dialogWifiTitle, style: const TextStyle(color: Colors.white)),
           content: TextField(
             controller: controller,
             style: const TextStyle(color: Colors.white),
@@ -119,11 +122,11 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Abbrechen'),
+              child: Text(ctxL10n.dialogCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: const Text('Weiter'),
+              child: Text(ctxL10n.dialogContinue),
             ),
           ],
         );

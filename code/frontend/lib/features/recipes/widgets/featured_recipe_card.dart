@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/recipe_models.dart';
@@ -14,6 +14,7 @@ class FeaturedRecipeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -66,7 +67,7 @@ class FeaturedRecipeCard extends StatelessWidget {
                         const Icon(Icons.bolt_rounded, size: 12, color: Colors.white),
                         const SizedBox(width: 4),
                         Text(
-                          'AI RECOMMENDED',
+                          l10n.aiRecommended,
                           style: AppTextStyles.captionSmall.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -107,7 +108,7 @@ class FeaturedRecipeCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Total: ${recipe.totalVolumeMl} ml',
+                            l10n.totalVolume(recipe.totalVolumeMl),
                             style: AppTextStyles.caption.copyWith(
                               color: Colors.white.withValues(alpha: 0.8),
                             ),
@@ -151,7 +152,7 @@ class FeaturedRecipeCard extends StatelessWidget {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        'Craft',
+                        l10n.craft,
                         style: AppTextStyles.labelMedium.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -162,7 +163,7 @@ class FeaturedRecipeCard extends StatelessWidget {
                 ),
               ),
             ],
-            ),
+          ),
         ),
       ),
     );

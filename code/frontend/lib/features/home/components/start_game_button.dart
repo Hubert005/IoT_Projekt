@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 
 class StartGameButton extends StatelessWidget {
@@ -9,6 +9,7 @@ class StartGameButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       height: 56,
@@ -29,14 +30,14 @@ class StartGameButton extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(28),
           onTap: onTap,
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.play_circle_outline_rounded, color: Colors.white, size: 22),
-              SizedBox(width: 8),
+              const Icon(Icons.play_circle_outline_rounded, color: Colors.white, size: 22),
+              const SizedBox(width: 8),
               Text(
-                'START GAME',
-                style: TextStyle(
+                l10n.startGame,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                   fontSize: 17,

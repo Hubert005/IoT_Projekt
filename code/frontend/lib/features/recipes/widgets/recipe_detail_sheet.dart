@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/recipe_models.dart';
@@ -13,6 +13,7 @@ class RecipeDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -66,7 +67,7 @@ class RecipeDetailSheet extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
-                                'AI RECOMMENDED',
+                                l10n.aiRecommended,
                                 style: AppTextStyles.captionSmall.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
@@ -104,7 +105,7 @@ class RecipeDetailSheet extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Gesamt: ${recipe.totalVolumeMl} ml',
+                            l10n.totalVolume(recipe.totalVolumeMl),
                             style: AppTextStyles.caption.copyWith(
                               color: Colors.white.withValues(alpha: 0.82),
                             ),
@@ -128,7 +129,7 @@ class RecipeDetailSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Mix Details',
+                    l10n.mixDetails,
                     style: AppTextStyles.labelMedium.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w700,
@@ -174,7 +175,7 @@ class RecipeDetailSheet extends StatelessWidget {
             const SizedBox(height: 14),
             FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Schließen'),
+              child: Text(l10n.close),
             ),
           ],
         ),

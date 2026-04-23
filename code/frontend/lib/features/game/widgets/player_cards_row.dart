@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../models/round_result.dart';
 import 'player_card.dart';
 
@@ -23,6 +23,7 @@ class PlayerCardsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -30,7 +31,7 @@ class PlayerCardsRow extends StatelessWidget {
           Expanded(
             child: PlayerCard(
               imagePath: player1ImagePath,
-              label: 'Player 1',
+              label: l10n.playerLabel(1),
               isWinner: gameOver && seriesWinner == 1,
               isLoser: gameOver && seriesWinner == 2,
               gameOver: gameOver,
@@ -42,7 +43,7 @@ class PlayerCardsRow extends StatelessWidget {
           Expanded(
             child: PlayerCard(
               imagePath: player2ImagePath,
-              label: 'Player 2',
+              label: l10n.playerLabel(2),
               isWinner: gameOver && seriesWinner == 2,
               isLoser: gameOver && seriesWinner == 1,
               gameOver: gameOver,

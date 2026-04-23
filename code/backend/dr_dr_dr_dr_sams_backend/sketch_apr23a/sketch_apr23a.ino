@@ -107,7 +107,7 @@ void handleRoute(WiFiClient& client, const String& method, const String& path, c
     String c = getQueryParam(query, "c");
     String d = getQueryParam(query, "d");
 
-    delay(2000);
+    delay(10000);
     String body = "{\"ok\":true,\"message\":\"mix_ok\",\"received\":\"mix_" + a + "_" + b + "_" + c + "_" + d + "\"}";
     sendJson(client, 200, body);
     return;

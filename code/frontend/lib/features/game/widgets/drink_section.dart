@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../extension/game_phase.dart';
@@ -12,6 +12,7 @@ class DrinkSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isReady = phase == GamePhase.drinkReady;
 
     return AnimatedContainer(
@@ -27,92 +28,92 @@ class DrinkSection extends StatelessWidget {
       ),
       child: switch (phase) {
         GamePhase.gameOver => _drinkStatusRow(
-          color: AppColors.warning,
-          title: 'Drink wird ermittelt …',
-          subtitle: 'Verlierer bekommt seinen Spezial-Drink',
-          loading: true,
-        ),
+            color: AppColors.warning,
+            title: l10n.drinkDetermining,
+            subtitle: l10n.drinkDeterminingDesc,
+            loading: true,
+          ),
         GamePhase.drinkSelecting => _drinkStatusRow(
-          color: AppColors.primary,
-          title: 'KI analysiert Loser-Foto …',
-          subtitle: 'Drink wird ausgewählt',
-          loading: true,
-        ),
+            color: AppColors.primary,
+            title: l10n.aiAnalyzingPhoto,
+            subtitle: l10n.drinkBeingSelected,
+            loading: true,
+          ),
         GamePhase.drinkSending => _drinkStatusRow(
-          color: AppColors.warning,
-          title: 'Drink wird gemixt …',
-          subtitle: 'Wird an Mixer geschickt',
-          loading: true,
-        ),
+            color: AppColors.warning,
+            title: l10n.drinkMixing,
+            subtitle: l10n.drinkSentToMixer,
+            loading: true,
+          ),
         GamePhase.drinkReady => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(10),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.local_bar_rounded, color: AppColors.primary, size: 24),
                   ),
-                  child: const Icon(Icons.local_bar_rounded, color: AppColors.primary, size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Dein Drink wird zubereitet!',
-                        style: AppTextStyles.bodyLarge.copyWith(color: AppColors.primary),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Stell den Becher unter die Lichtschranke, dann startet das Pumpen.',
-                        style: AppTextStyles.captionSmall.copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          height: 1.25,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.drinkBeingPrepared,
+                          style: AppTextStyles.bodyLarge.copyWith(color: AppColors.primary),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          l10n.placeUnderSensor,
+                          style: AppTextStyles.captionSmall.copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Material(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(24),
-              child: InkWell(
+                  const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Material(
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(24),
-                onTap: onBackToStart,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.home_rounded, color: Colors.white, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'ZURÜCK ZUM START',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          letterSpacing: 0.3,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: onBackToStart,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.home_rounded, color: Colors.white, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          l10n.backToStart,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            letterSpacing: 0.3,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         _ => const SizedBox.shrink(),
       },
     );

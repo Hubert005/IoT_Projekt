@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import 'status_card.dart';
 
@@ -10,13 +10,14 @@ class HomeStatusRow extends StatelessWidget {
 
   const HomeStatusRow({
     super.key,
-    this.wifiInfo = 'Arduino IP automatisch abgefragt',
+    required this.wifiInfo,
     this.connected = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         const SizedBox(width: 36),
@@ -24,7 +25,7 @@ class HomeStatusRow extends StatelessWidget {
           child: GestureDetector(
             onTap: onTap,
             child: StatusCard(
-              title: 'WLAN STATUS',
+              title: l10n.wifiStatus,
               value: wifiInfo,
               valueColor: connected ? AppColors.success : AppColors.textPrimary,
               showDot: connected,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../extension/game_phase.dart';
@@ -18,20 +18,21 @@ class GameResultHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final (text, color, loading) = switch (phase) {
-      GamePhase.waitingRound => ('WARTE AUF RUNDE $currentRound …', AppColors.warning, true),
-      GamePhase.showingRound => ('ERGEBNIS RUNDE $roundsLength', AppColors.info, false),
-      GamePhase.gameOver => ('SPIELERGEBNIS', AppColors.primary, false),
-      GamePhase.drinkSelecting => ('DRINK WIRD ERMITTELT …', AppColors.warning, true),
-      GamePhase.drinkSending => ('WIRD AN MIXER GESCHICKT …', AppColors.warning, true),
-      GamePhase.drinkReady => ('DRINK BESTÄTIGT', AppColors.success, false),
+      GamePhase.waitingRound => (l10n.waitingForRound(currentRound), AppColors.warning, true),
+      GamePhase.showingRound => (l10n.resultRound(roundsLength), AppColors.info, false),
+      GamePhase.gameOver => (l10n.gameResultTitle, AppColors.primary, false),
+      GamePhase.drinkSelecting => (l10n.drinkSelectingStatus, AppColors.warning, true),
+      GamePhase.drinkSending => (l10n.drinkSendingStatus, AppColors.warning, true),
+      GamePhase.drinkReady => (l10n.drinkReadyStatus, AppColors.success, false),
     };
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 14),
       child: Column(
         children: [
-          Text('Game Result', style: AppTextStyles.headingLarge),
+          Text(l10n.gameResultHeading, style: AppTextStyles.headingLarge),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

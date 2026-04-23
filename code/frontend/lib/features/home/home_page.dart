@@ -1,16 +1,20 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:iot_drink_mixer/core/theme/app_text_styles.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_colors.dart';
+import '../../main.dart';
 import '../game/photo_capture_page.dart';
 import '../recipes/recipes_page.dart';
 import 'components/bottom_nav_item.dart';
 import 'components/home_status_row.dart';
 import 'components/next_action_card.dart';
 import 'components/start_game_button.dart';
+
+enum _WifiState { initial, connected, unreachable }
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,7 +29,7 @@ class _HomePageState extends State<HomePage> {
 
   int _navIndex = 0;
   String _baseUrl = _defaultBaseUrl;
-  String _wifiInfo = 'Tippen zum Einrichten';
+  _WifiState _wifiState = _WifiState.initial;
   bool _wifiConnected = false;
 
   @override
@@ -46,7 +50,7 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       _wifiConnected = ok;
-      _wifiInfo = ok ? 'Verbunden: $_baseUrl' : 'Nicht erreichbar: $_baseUrl';
+      _wifiState = ok ? _WifiState.connected : _WifiState.unreachable;
     });
   }
 
@@ -64,6 +68,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _configureWifi() async {
+    final l10n = AppLocalizations.of(context)!;
     final value = await showDialog<String>(
       context: context,
       builder: (_) => _WifiConfigDialog(initialUrl: _baseUrl),
@@ -77,7 +82,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _baseUrl = value;
       _wifiConnected = ok;
-      _wifiInfo = ok ? 'Verbunden: $value' : 'Nicht erreichbar: $value';
+      _wifiState = ok ? _WifiState.connected : _WifiState.unreachable;
     });
 
     final prefs = await SharedPreferences.getInstance();
@@ -85,17 +90,25 @@ class _HomePageState extends State<HomePage> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ok ? 'WLAN verbunden' : 'IP gespeichert, aber /api/ping nicht erreichbar')),
+      SnackBar(
+        content: Text(ok ? l10n.wifiConnectedSnackbar : l10n.wifiIpSavedNotReachable),
+      ),
     );
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────
+  void _toggleLocale() {
+    localeNotifier.value = localeNotifier.value.languageCode == 'de'
+        ? const Locale('en')
+        : const Locale('de');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(child: Column(children: [Expanded(child: _buildBody()), _buildBottomNav()])),
+      body: SafeArea(
+        child: Column(children: [Expanded(child: _buildBody()), _buildBottomNav()]),
+      ),
     );
   }
 
@@ -108,19 +121,49 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ── Home Tab ────────────────────────────────────────────────────────────
-
   Widget _buildHome() {
+    final l10n = AppLocalizations.of(context)!;
+    final isDE = localeNotifier.value.languageCode == 'de';
+    final wifiInfo = switch (_wifiState) {
+      _WifiState.initial => l10n.wifiInfoDefault,
+      _WifiState.connected => l10n.wifiConnected(_baseUrl),
+      _WifiState.unreachable => l10n.wifiNotReachable(_baseUrl),
+    };
+
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-          child: const Text('Gehirnzellen Massaker', style: AppTextStyles.headingUltraLarge),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(l10n.appHeading, style: AppTextStyles.headingUltraLarge),
+              ),
+              GestureDetector(
+                onTap: _toggleLocale,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Text(
+                    isDE ? 'EN' : 'DE',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: HomeStatusRow(
-            wifiInfo: _wifiInfo,
+            wifiInfo: wifiInfo,
             connected: _wifiConnected,
             onTap: _configureWifi,
           ),
@@ -141,9 +184,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── Bottom Nav ──────────────────────────────────────────────────────────
-
   Widget _buildBottomNav() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
       decoration: BoxDecoration(
@@ -155,13 +197,13 @@ class _HomePageState extends State<HomePage> {
         children: [
           BottomNavItem(
             icon: Icons.grid_view_rounded,
-            label: 'HOME',
+            label: l10n.navHome,
             isActive: _navIndex == 0,
             onTap: () => setState(() => _navIndex = 0),
           ),
           BottomNavItem(
             icon: Icons.menu_book_rounded,
-            label: 'RECIPE',
+            label: l10n.navRecipe,
             isActive: _navIndex == 1,
             onTap: () => setState(() => _navIndex = 1),
           ),
@@ -197,9 +239,10 @@ class _WifiConfigDialogState extends State<_WifiConfigDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       backgroundColor: AppColors.surface,
-      title: const Text('Arduino WLAN Adresse', style: TextStyle(color: Colors.white)),
+      title: Text(l10n.dialogWifiTitle, style: const TextStyle(color: Colors.white)),
       content: TextField(
         controller: _controller,
         style: const TextStyle(color: Colors.white),
@@ -211,11 +254,11 @@ class _WifiConfigDialogState extends State<_WifiConfigDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Abbrechen'),
+          child: Text(l10n.dialogCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, _controller.text.trim()),
-          child: const Text('Speichern & Testen'),
+          child: Text(l10n.dialogSaveAndTest),
         ),
       ],
     );

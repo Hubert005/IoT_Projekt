@@ -10,7 +10,18 @@ SoftwareSerial espSerial(8, 9); // RX, TX
 #define M1 3
 #define M2 4
 #define M3 5
+#define B0 8
+
 String msg;
+
+/// @brief pump "Motor" for "duration" milliseconds
+/// @param Motor Motor number (0-3)
+/// @param duration Duration in milliseconds to pump
+void pump(int Motor, int duration){
+  digitalWrite(Motor, HIGH);
+  delay (duration);
+  digitalWrite(Motor, LOW);
+}
 
 void setup() {
   pinMode(BUZZER, OUTPUT);
@@ -35,17 +46,39 @@ void loop() {
     }
   }
 
-  if(msg == "Beep"){
+  // msg is: mix_'duration Pump 0'_'duration Pump 1'_'duration Pump 2'_'duration Pump 3'
+  if(msg.startsWith("mix_")){
+    msg.remove(0, 4); // remove "mix_"
+    int durations[4];
+    for(int i = 0; i < 4; i++){
+      int underscoreIndex = msg.indexOf('_');
+      if(underscoreIndex == -1){
+        Serial.println("Invalid message format");
+        return;
+      }
+      String durationStr = msg.substring(0, underscoreIndex);
+      durations[i] = durationStr.toInt();
+      msg.remove(0, underscoreIndex + 1);
+    }
+    // Pump the motors
+    for(int i = 0; i < 4; i++){
+      pump(M0 + i, durations[i]);
+    }
+
+    // send OK to ESP after pumping is complete
+    espSerial.println("mix_ok");
+
+    // Buzz to indicate completion
     digitalWrite(BUZZER, HIGH);
-  } 
-  if(msg == "No Beep!"){
+    delay(250);
+    digitalWrite(BUZZER, LOW);
+    delay(50);
+    digitalWrite(BUZZER, HIGH);
+    delay(250);
     digitalWrite(BUZZER, LOW);
   }
-  if(msg == "Button0On"){
-    digitalWrite(M0, HIGH);
-  } 
-  if(msg == "Button0Off"){
-    digitalWrite(M0, LOW);
-  }
 
+  msg = "";
+
+  // TODO: add logic for manual pumping
 }

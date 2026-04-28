@@ -4,6 +4,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/backend_service.dart';
+import '../../services/ble_backend_service.dart';
+import '../../services/ble_connection.dart';
+import '../../services/ble_mixer_service.dart';
+import '../../services/connection_mode.dart';
 import '../../services/drink_service.dart';
 import '../../services/mixer_service.dart';
 import '../../services/wifi_backend_service.dart';
@@ -15,7 +19,9 @@ import 'components/player_photo_card.dart';
 import 'game_screen.dart';
 
 class PhotoCapturePage extends StatefulWidget {
-  const PhotoCapturePage({super.key});
+  final ConnectionMode mode;
+
+  const PhotoCapturePage({super.key, this.mode = ConnectionMode.wifi});
 
   @override
   State<PhotoCapturePage> createState() => _PhotoCapturePageState();
@@ -60,10 +66,11 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
       );
       if (file != null && mounted) {
         setState(() {
-          if (player == 1)
+          if (player == 1) {
             _p1Path = file.path;
-          else
+          } else {
             _p2Path = file.path;
+          }
         });
       }
     } finally {
@@ -77,15 +84,35 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     late final BackendService backend;
     late final MixerService mixer;
 
-    String? baseUrl;
-    if (_hasSavedBaseUrl) {
-      baseUrl = _lastBaseUrl;
+    if (widget.mode == ConnectionMode.ble) {
+      // Sicherstellen, dass die BLE-Verbindung steht.
+      if (!BleConnection.instance.isConnected) {
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.bleConnectingSnackbar)),
+        );
+        final ok = await BleConnection.instance.connect();
+        if (!mounted) return;
+        if (!ok) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.bleConnectFailed)),
+          );
+          return;
+        }
+      }
+      backend = BleBackendService();
+      mixer = BleMixerService();
     } else {
-      baseUrl = await _askWifiBaseUrl();
+      String? baseUrl;
+      if (_hasSavedBaseUrl) {
+        baseUrl = _lastBaseUrl;
+      } else {
+        baseUrl = await _askWifiBaseUrl();
+      }
+      if (!mounted || baseUrl == null || baseUrl.isEmpty) return;
+      backend = WifiBackendService(baseUrl: baseUrl);
+      mixer = WifiMixerService(baseUrl: baseUrl);
     }
-    if (!mounted || baseUrl == null || baseUrl.isEmpty) return;
-    backend = WifiBackendService(baseUrl: baseUrl);
-    mixer = WifiMixerService(baseUrl: baseUrl);
 
     Navigator.pushReplacement(
       context,
@@ -102,7 +129,6 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
   }
 
   Future<String?> _askWifiBaseUrl() async {
-    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: _lastBaseUrl);
     final value = await showDialog<String>(
       context: context,
@@ -110,7 +136,8 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
         final ctxL10n = AppLocalizations.of(ctx)!;
         return AlertDialog(
           backgroundColor: AppColors.surface,
-          title: Text(ctxL10n.dialogWifiTitle, style: const TextStyle(color: Colors.white)),
+          title: Text(ctxL10n.dialogWifiTitle,
+              style: const TextStyle(color: Colors.white)),
           content: TextField(
             controller: controller,
             style: const TextStyle(color: Colors.white),

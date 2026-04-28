@@ -7,12 +7,18 @@ class HomeStatusRow extends StatelessWidget {
   final String wifiInfo;
   final bool connected;
   final VoidCallback? onTap;
+  final String? title;
+  final IconData? iconConnected;
+  final IconData? iconDisconnected;
 
   const HomeStatusRow({
     super.key,
     required this.wifiInfo,
     this.connected = false,
     this.onTap,
+    this.title,
+    this.iconConnected,
+    this.iconDisconnected,
   });
 
   @override
@@ -25,11 +31,13 @@ class HomeStatusRow extends StatelessWidget {
           child: GestureDetector(
             onTap: onTap,
             child: StatusCard(
-              title: l10n.wifiStatus,
+              title: title ?? l10n.wifiStatus,
               value: wifiInfo,
               valueColor: connected ? AppColors.success : AppColors.textPrimary,
               showDot: connected,
-              trailingIcon: connected ? Icons.wifi : Icons.wifi_off,
+              trailingIcon: connected
+                  ? (iconConnected ?? Icons.wifi)
+                  : (iconDisconnected ?? Icons.wifi_off),
             ),
           ),
         ),

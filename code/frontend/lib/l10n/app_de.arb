@@ -28,6 +28,26 @@
   "dialogSaveAndTest": "Speichern & Testen",
   "dialogContinue": "Weiter",
 
+  "modeWifi": "WLAN",
+  "modeBle": "BLE",
+  "modeSwitchTitle": "Verbindungsmodus",
+  "modeSwitchHint": "Tippen zum Wechseln zwischen WLAN und Bluetooth",
+
+  "bleStatus": "BLUETOOTH STATUS",
+  "bleInfoDefault": "Tippen um nach ESP32 zu suchen",
+  "bleScanning": "Suche ESP32 …",
+  "bleConnected": "Verbunden: {name}",
+  "@bleConnected": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "bleNotFound": "ESP32 nicht gefunden – ist es eingeschaltet?",
+  "bleConnectedSnackbar": "Bluetooth verbunden",
+  "bleConnectingSnackbar": "Verbinde über Bluetooth …",
+  "bleConnectFailed": "Bluetooth-Verbindung fehlgeschlagen",
+  "bleDisconnect": "Trennen",
+
   "nextAction": "N\u00c4CHSTE AKTION",
   "nextActionTitle": "Becher platzieren und Spiel starten",
   "nextActionDescription": "Nach dem Start machen beide Spieler ein Foto. Dann beginnt das Schere-Stein-Papier-Spiel \u2013 das Ergebnis kommt live vom Arduino. Der Verlierer bekommt anschlie\u00dfend automatisch seinen Drink gemixt. Der Fortschritt wird live auf dem Bildschirm angezeigt.",

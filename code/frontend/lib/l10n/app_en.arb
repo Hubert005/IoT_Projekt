@@ -28,6 +28,26 @@
   "dialogSaveAndTest": "Save & Test",
   "dialogContinue": "Continue",
 
+  "modeWifi": "WIFI",
+  "modeBle": "BLE",
+  "modeSwitchTitle": "Connection mode",
+  "modeSwitchHint": "Tap to switch between WiFi and Bluetooth",
+
+  "bleStatus": "BLUETOOTH STATUS",
+  "bleInfoDefault": "Tap to scan for ESP32",
+  "bleScanning": "Scanning for ESP32 …",
+  "bleConnected": "Connected: {name}",
+  "@bleConnected": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "bleNotFound": "ESP32 not found – is it powered on?",
+  "bleConnectedSnackbar": "Bluetooth connected",
+  "bleConnectingSnackbar": "Connecting via Bluetooth …",
+  "bleConnectFailed": "Bluetooth connection failed",
+  "bleDisconnect": "Disconnect",
+
   "nextAction": "NEXT ACTION",
   "nextActionTitle": "Place cup and start game",
   "nextActionDescription": "After starting, both players take a photo. Then the Rock-Paper-Scissors game begins – the result comes live from the Arduino. The loser automatically gets their drink mixed. Progress is shown live on the screen.",

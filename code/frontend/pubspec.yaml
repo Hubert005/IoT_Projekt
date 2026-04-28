@@ -39,6 +39,7 @@ dependencies:
   camera: ^0.11.0
   http: ^1.2.2
   shared_preferences: ^2.3.2
+  flutter_blue_plus: ^1.34.5
 
 dev_dependencies:
   flutter_test:

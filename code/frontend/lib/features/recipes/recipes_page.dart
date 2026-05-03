@@ -15,8 +15,6 @@ class RecipesPage extends StatefulWidget {
   State<RecipesPage> createState() => _RecipesPageState();
 }
 
-enum _RecipeFilter { all, available, favorites }
-
 class _RecipesPageState extends State<RecipesPage> {
   final TextEditingController _searchController = TextEditingController();
   RecipeFilter _filter = RecipeFilter.all;

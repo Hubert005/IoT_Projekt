@@ -6,32 +6,7 @@
   "navHome": "HOME",
   "navRecipe": "REZEPT",
 
-  "wifiStatus": "WLAN STATUS",
-  "wifiInfoDefault": "Tippen zum Einrichten",
-  "wifiConnected": "Verbunden: {url}",
-  "@wifiConnected": {
-    "placeholders": {
-      "url": { "type": "String" }
-    }
-  },
-  "wifiNotReachable": "Nicht erreichbar: {url}",
-  "@wifiNotReachable": {
-    "placeholders": {
-      "url": { "type": "String" }
-    }
-  },
-  "wifiConnectedSnackbar": "WLAN verbunden",
-  "wifiIpSavedNotReachable": "IP gespeichert, aber /api/ping nicht erreichbar",
-
-  "dialogWifiTitle": "Arduino WLAN Adresse",
   "dialogCancel": "Abbrechen",
-  "dialogSaveAndTest": "Speichern & Testen",
-  "dialogContinue": "Weiter",
-
-  "modeWifi": "WLAN",
-  "modeBle": "BLE",
-  "modeSwitchTitle": "Verbindungsmodus",
-  "modeSwitchHint": "Tippen zum Wechseln zwischen WLAN und Bluetooth",
 
   "bleStatus": "BLUETOOTH STATUS",
   "bleInfoDefault": "Tippen um nach ESP32 zu suchen",
@@ -42,22 +17,22 @@
       "name": { "type": "String" }
     }
   },
-  "bleNotFound": "ESP32 nicht gefunden – ist es eingeschaltet?",
+  "bleNotFound": "ESP32 nicht gefunden",
   "bleConnectedSnackbar": "Bluetooth verbunden",
   "bleConnectingSnackbar": "Verbinde über Bluetooth …",
   "bleConnectFailed": "Bluetooth-Verbindung fehlgeschlagen",
   "bleDisconnect": "Trennen",
 
-  "nextAction": "N\u00c4CHSTE AKTION",
+  "nextAction": "NÄCHSTE AKTION",
   "nextActionTitle": "Becher platzieren und Spiel starten",
-  "nextActionDescription": "Nach dem Start machen beide Spieler ein Foto. Dann beginnt das Schere-Stein-Papier-Spiel \u2013 das Ergebnis kommt live vom Arduino. Der Verlierer bekommt anschlie\u00dfend automatisch seinen Drink gemixt. Der Fortschritt wird live auf dem Bildschirm angezeigt.",
+  "nextActionDescription": "Nach dem Start machen beide Spieler ein Foto. Dann beginnt das Schere-Stein-Papier-Spiel – das Ergebnis kommt live vom Arduino. Der Verlierer bekommt anschließend automatisch seinen Drink gemixt. Der Fortschritt wird live auf dem Bildschirm angezeigt.",
 
   "startGame": "SPIEL STARTEN",
   "startGameAction": "SPIEL STARTEN",
 
   "photoCaptureTitle": "Fotos aufnehmen",
   "takePhoto": "Foto aufnehmen",
-  "photoReady": "Foto bereit \u2713",
+  "photoReady": "Foto bereit ✓",
   "noPhoto": "Noch kein Foto",
 
   "playerLabel": "Spieler {n}",
@@ -67,7 +42,7 @@
     }
   },
 
-  "seriesStats": "SERIES STATS  \u2022  BEST OF {n}",
+  "seriesStats": "SERIES STATS  •  BEST OF {n}",
   "@seriesStats": {
     "placeholders": {
       "n": { "type": "int" }
@@ -84,7 +59,7 @@
   "player2Label": "SPIELER 2",
 
   "gameResultHeading": "Spielergebnis",
-  "waitingForRound": "WARTE AUF RUNDE {n} \u2026",
+  "waitingForRound": "WARTE AUF RUNDE {n} …",
   "@waitingForRound": {
     "placeholders": {
       "n": { "type": "int" }
@@ -97,28 +72,28 @@
     }
   },
   "gameResultTitle": "SPIELERGEBNIS",
-  "drinkSelectingStatus": "DRINK WIRD ERMITTELT \u2026",
-  "drinkSendingStatus": "WIRD AN MIXER GESCHICKT \u2026",
-  "drinkReadyStatus": "DRINK BEST\u00c4TIGT",
+  "drinkSelectingStatus": "DRINK WIRD ERMITTELT …",
+  "drinkSendingStatus": "WIRD AN MIXER GESCHICKT …",
+  "drinkReadyStatus": "DRINK BESTÄTIGT",
 
   "badgeWinner": "WINNER",
   "badgeLoser": "LOSER",
   "badgeVictor": "SIEGER",
   "badgeFocusTarget": "FOCUS TARGET",
-  "waitingLabel": "WARTE \u2026",
+  "waitingLabel": "WARTE …",
 
-  "drinkDetermining": "Drink wird ermittelt \u2026",
+  "drinkDetermining": "Drink wird ermittelt …",
   "drinkDeterminingDesc": "Verlierer bekommt seinen Spezial-Drink",
-  "aiAnalyzingPhoto": "KI analysiert Loser-Foto \u2026",
-  "drinkBeingSelected": "Drink wird ausgew\u00e4hlt",
-  "drinkMixing": "Drink wird gemixt \u2026",
+  "aiAnalyzingPhoto": "KI analysiert Loser-Foto …",
+  "drinkBeingSelected": "Drink wird ausgewählt",
+  "drinkMixing": "Drink wird gemixt …",
   "drinkSentToMixer": "Wird an Mixer geschickt",
   "drinkBeingPrepared": "Dein Drink wird zubereitet!",
   "placeUnderSensor": "Stell den Becher unter die Lichtschranke, dann startet das Pumpen.",
-  "backToStart": "ZUR\u00dcCK ZUM START",
+  "backToStart": "ZURÜCK ZUM START",
 
   "filterAll": "Alle",
-  "filterAvailable": "Verf\u00fcgbar",
+  "filterAvailable": "Verfügbar",
   "filterFavorites": "Favoriten",
   "searchHint": "Rezepte suchen...",
   "aiRecommended": "KI EMPFOHLEN",
@@ -128,16 +103,16 @@
       "ml": { "type": "int" }
     }
   },
-  "close": "Schlie\u00dfen",
+  "close": "Schließen",
   "mixDetails": "Mix Details",
   "statusReady": "BEREIT",
   "statusLowStock": "WENIG VORRAT",
-  "statusRefill": "NACHF\u00dcLLEN",
+  "statusRefill": "NACHFÜLLEN",
   "craft": "Mixen",
 
   "configurePumps": "PUMPEN KONFIGURIEREN",
   "pumpConfigTitle": "Pumpen-Belegung",
-  "pumpConfigSubtitle": "Lege fest, hinter welcher Pumpe welcher Drink steckt und wie viel ml verf\u00fcgbar sind. Die KI nutzt diese Angaben, um den Verlierer-Drink zu erstellen.",
+  "pumpConfigSubtitle": "Lege fest, hinter welcher Pumpe welcher Drink steckt und wie viel ml verfügbar sind. Die KI nutzt diese Angaben, um den Verlierer-Drink zu erstellen.",
   "pumpConfigSave": "Speichern",
   "pumpLabel": "Pumpe {n}",
   "@pumpLabel": {
@@ -145,6 +120,6 @@
       "n": { "type": "int" }
     }
   },
-  "pumpDrinkHint": "z. B. Wodka, Cola, Saft \u2026",
+  "pumpDrinkHint": "z. B. Wodka, Cola, Saft …",
   "pumpAmountHint": "Menge"
 }

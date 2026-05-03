@@ -1,14 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:http/http.dart' as http;
 import 'package:iot_drink_mixer/core/theme/app_text_styles.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_colors.dart';
 import '../../main.dart';
 import '../../services/ble_connection.dart';
-import '../../services/connection_mode.dart';
 import '../../services/pump_config_store.dart';
 import '../game/photo_capture_page.dart';
 import '../recipes/recipes_page.dart';
@@ -29,13 +24,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  static const String _prefsBaseUrlKey = 'wifi_base_url';
-  static const String _defaultBaseUrl = 'http://192.168.178.50';
-
   int _navIndex = 0;
 
-  ConnectionMode _mode = ConnectionMode.wifi;
-  String _baseUrl = _defaultBaseUrl;
   _LinkState _linkState = _LinkState.initial;
   bool _connected = false;
   bool _busy = false;
@@ -51,82 +41,13 @@ class _HomePageState extends State<HomePage> {
     if (!PumpConfigStore.instance.isLoaded) {
       await PumpConfigStore.instance.load();
     }
-    _mode = await ConnectionModeStore.load();
-
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_prefsBaseUrlKey);
-    if (saved != null && saved.isNotEmpty) _baseUrl = saved;
 
     if (!mounted) return;
-    setState(() {});
-
-    if (_mode == ConnectionMode.wifi) {
-      final ok = await _ping(_baseUrl);
-      if (!mounted) return;
-      setState(() {
-        _connected = ok;
-        _linkState = ok ? _LinkState.connected : _LinkState.unreachable;
-      });
-    } else {
-      // Im BLE-Modus nicht automatisch verbinden – Nutzer tippt auf
-      // die Karte, dann wird gescannt.
-      setState(() {
-        _connected = BleConnection.instance.isConnected;
-        _linkState =
-            _connected ? _LinkState.connected : _LinkState.initial;
-      });
-    }
-  }
-
-  // ---------- WiFi ----------
-
-  Future<bool> _ping(String baseUrl) async {
-    try {
-      final root = Uri.parse(baseUrl);
-      final uri = root.replace(path: '/api/ping');
-      final res = await http.get(uri).timeout(const Duration(seconds: 4));
-      if (res.statusCode < 200 || res.statusCode >= 300) return false;
-      final body = jsonDecode(res.body);
-      return body is Map<String, dynamic> && body['ok'] == true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<void> _configureWifi() async {
-    final l10n = AppLocalizations.of(context)!;
-    final value = await showDialog<String>(
-      context: context,
-      builder: (_) => _WifiConfigDialog(initialUrl: _baseUrl),
-    );
-
-    if (value == null || value.isEmpty) return;
-
-    setState(() => _busy = true);
-    final ok = await _ping(value);
-    if (!mounted) return;
-
     setState(() {
-      _busy = false;
-      _baseUrl = value;
-      _connected = ok;
-      _linkState = ok ? _LinkState.connected : _LinkState.unreachable;
+      _connected = BleConnection.instance.isConnected;
+      _linkState = _connected ? _LinkState.connected : _LinkState.initial;
     });
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefsBaseUrlKey, value);
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ok ? l10n.wifiConnectedSnackbar : l10n.wifiIpSavedNotReachable,
-        ),
-      ),
-    );
   }
-
-  // ---------- BLE ----------
 
   Future<void> _connectBle() async {
     final l10n = AppLocalizations.of(context)!;
@@ -174,44 +95,11 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // ---------- Mode-Toggle ----------
-
-  Future<void> _toggleMode() async {
-    final next =
-        _mode == ConnectionMode.wifi ? ConnectionMode.ble : ConnectionMode.wifi;
-    await ConnectionModeStore.save(next);
-
-    // beim Wechsel BLE sauber trennen
-    if (_mode == ConnectionMode.ble && BleConnection.instance.isConnected) {
-      await BleConnection.instance.disconnect();
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _mode = next;
-      _connected = false;
-      _linkState = _LinkState.initial;
-      _bleDeviceLabel = null;
-    });
-
-    // Im WiFi-Modus direkt prüfen, im BLE-Modus auf Tap warten.
-    if (_mode == ConnectionMode.wifi) {
-      final ok = await _ping(_baseUrl);
-      if (!mounted) return;
-      setState(() {
-        _connected = ok;
-        _linkState = ok ? _LinkState.connected : _LinkState.unreachable;
-      });
-    }
-  }
-
   void _toggleLocale() {
     localeNotifier.value = localeNotifier.value.languageCode == 'de'
         ? const Locale('en')
         : const Locale('de');
   }
-
-  // ---------- UI ----------
 
   @override
   Widget build(BuildContext context) {
@@ -238,28 +126,14 @@ class _HomePageState extends State<HomePage> {
     final l10n = AppLocalizations.of(context)!;
     final isDE = localeNotifier.value.languageCode == 'de';
 
-    final title = _mode == ConnectionMode.wifi ? l10n.wifiStatus : l10n.bleStatus;
-    final iconConnected =
-        _mode == ConnectionMode.wifi ? Icons.wifi : Icons.bluetooth_connected;
-    final iconDisconnected =
-        _mode == ConnectionMode.wifi ? Icons.wifi_off : Icons.bluetooth_disabled;
-
-    final statusText = switch ((_mode, _linkState)) {
-      (ConnectionMode.wifi, _LinkState.initial) => l10n.wifiInfoDefault,
-      (ConnectionMode.wifi, _LinkState.connected) => l10n.wifiConnected(_baseUrl),
-      (ConnectionMode.wifi, _LinkState.unreachable) =>
-        l10n.wifiNotReachable(_baseUrl),
-      (ConnectionMode.ble, _LinkState.initial) => l10n.bleInfoDefault,
-      (ConnectionMode.ble, _LinkState.connected) =>
-        l10n.bleConnected(_bleDeviceLabel ?? 'ESP32'),
-      (ConnectionMode.ble, _LinkState.unreachable) => l10n.bleNotFound,
+    final statusText = switch (_linkState) {
+      _LinkState.initial => l10n.bleInfoDefault,
+      _LinkState.connected => l10n.bleConnected(_bleDeviceLabel ?? 'ESP32'),
+      _LinkState.unreachable => l10n.bleNotFound,
     };
 
-    final onCardTap = _busy
-        ? null
-        : (_mode == ConnectionMode.wifi
-            ? _configureWifi
-            : (_connected ? _disconnectBle : _connectBle));
+    final onCardTap =
+        _busy ? null : (_connected ? _disconnectBle : _connectBle);
 
     return Column(
       children: [
@@ -273,8 +147,6 @@ class _HomePageState extends State<HomePage> {
                   style: AppTextStyles.headingUltraLarge,
                 ),
               ),
-              _modePill(),
-              const SizedBox(width: 8),
               GestureDetector(
                 onTap: _toggleLocale,
                 child: Container(
@@ -300,11 +172,11 @@ class _HomePageState extends State<HomePage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: HomeStatusRow(
-            title: title,
-            wifiInfo: statusText,
+            title: l10n.bleStatus,
+            statusInfo: statusText,
             connected: _connected,
-            iconConnected: iconConnected,
-            iconDisconnected: iconDisconnected,
+            iconConnected: Icons.bluetooth_connected,
+            iconDisconnected: Icons.bluetooth_disabled,
             onTap: onCardTap,
           ),
         ),
@@ -323,48 +195,12 @@ class _HomePageState extends State<HomePage> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => PhotoCapturePage(mode: _mode),
+                builder: (_) => const PhotoCapturePage(),
               ),
             ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _modePill() {
-    final l10n = AppLocalizations.of(context)!;
-    final label =
-        _mode == ConnectionMode.wifi ? l10n.modeWifi : l10n.modeBle;
-    final icon =
-        _mode == ConnectionMode.wifi ? Icons.wifi : Icons.bluetooth;
-    return Tooltip(
-      message: l10n.modeSwitchHint,
-      child: GestureDetector(
-        onTap: _busy ? null : _toggleMode,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: AppColors.primary),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -395,59 +231,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _WifiConfigDialog extends StatefulWidget {
-  final String initialUrl;
-
-  const _WifiConfigDialog({required this.initialUrl});
-
-  @override
-  State<_WifiConfigDialog> createState() => _WifiConfigDialogState();
-}
-
-class _WifiConfigDialogState extends State<_WifiConfigDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialUrl);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return AlertDialog(
-      backgroundColor: AppColors.surface,
-      title: Text(l10n.dialogWifiTitle,
-          style: const TextStyle(color: Colors.white)),
-      content: TextField(
-        controller: _controller,
-        style: const TextStyle(color: Colors.white),
-        decoration: const InputDecoration(
-          hintText: 'http://192.168.178.50',
-          hintStyle: TextStyle(color: Colors.white38),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.dialogCancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(context, _controller.text.trim()),
-          child: Text(l10n.dialogSaveAndTest),
-        ),
-      ],
     );
   }
 }

@@ -4,7 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import 'status_card.dart';
 
 class HomeStatusRow extends StatelessWidget {
-  final String wifiInfo;
+  final String statusInfo;
   final bool connected;
   final VoidCallback? onTap;
   final String? title;
@@ -13,7 +13,7 @@ class HomeStatusRow extends StatelessWidget {
 
   const HomeStatusRow({
     super.key,
-    required this.wifiInfo,
+    required this.statusInfo,
     this.connected = false,
     this.onTap,
     this.title,
@@ -31,13 +31,13 @@ class HomeStatusRow extends StatelessWidget {
           child: GestureDetector(
             onTap: onTap,
             child: StatusCard(
-              title: title ?? l10n.wifiStatus,
-              value: wifiInfo,
+              title: title ?? l10n.bleStatus,
+              value: statusInfo,
               valueColor: connected ? AppColors.success : AppColors.textPrimary,
               showDot: connected,
               trailingIcon: connected
-                  ? (iconConnected ?? Icons.wifi)
-                  : (iconDisconnected ?? Icons.wifi_off),
+                  ? (iconConnected ?? Icons.bluetooth_connected)
+                  : (iconDisconnected ?? Icons.bluetooth_disabled),
             ),
           ),
         ),

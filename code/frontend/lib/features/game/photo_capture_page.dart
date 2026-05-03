@@ -32,10 +32,11 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
       );
       if (file != null && mounted) {
         setState(() {
-          if (player == 1)
+          if (player == 1) {
             _p1Path = file.path;
-          else
+          } else {
             _p2Path = file.path;
+          }
         });
       }
     } finally {
@@ -52,13 +53,14 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => GameScreen(
-          player1ImagePath: _p1Path!,
-          player2ImagePath: _p2Path!,
-          backend: backend,
-          drinkService: MockDrinkService(),
-          mixerService: mixer,
-        ),
+        builder:
+            (_) => GameScreen(
+              player1ImagePath: _p1Path!,
+              player2ImagePath: _p2Path!,
+              backend: backend,
+              drinkService: MockDrinkService(),
+              mixerService: mixer,
+            ),
       ),
     );
   }
@@ -78,7 +80,10 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
             children: [
               PhotoCaptureHeader(onBack: () => Navigator.pop(context)),
               const SizedBox(height: 28),
-              PhotoCaptureStepIndicator(player1Done: p1Done, player2Done: p2Done),
+              PhotoCaptureStepIndicator(
+                player1Done: p1Done,
+                player2Done: p2Done,
+              ),
               const SizedBox(height: 28),
               Expanded(
                 child: Column(

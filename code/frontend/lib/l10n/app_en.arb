@@ -133,5 +133,18 @@
   "statusReady": "READY",
   "statusLowStock": "LOW STOCK",
   "statusRefill": "REFILL",
-  "craft": "Craft"
+  "craft": "Craft",
+
+  "configurePumps": "CONFIGURE PUMPS",
+  "pumpConfigTitle": "Pump Assignment",
+  "pumpConfigSubtitle": "Set which drink is behind each pump and how many ml are available. The AI uses this info to create the loser drink.",
+  "pumpConfigSave": "Save",
+  "pumpLabel": "Pump {n}",
+  "@pumpLabel": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "pumpDrinkHint": "e.g. Vodka, Cola, Juice …",
+  "pumpAmountHint": "Amount"
 }

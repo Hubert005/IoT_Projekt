@@ -133,5 +133,18 @@
   "statusReady": "BEREIT",
   "statusLowStock": "WENIG VORRAT",
   "statusRefill": "NACHF\u00dcLLEN",
-  "craft": "Mixen"
+  "craft": "Mixen",
+
+  "configurePumps": "PUMPEN KONFIGURIEREN",
+  "pumpConfigTitle": "Pumpen-Belegung",
+  "pumpConfigSubtitle": "Lege fest, hinter welcher Pumpe welcher Drink steckt und wie viel ml verf\u00fcgbar sind. Die KI nutzt diese Angaben, um den Verlierer-Drink zu erstellen.",
+  "pumpConfigSave": "Speichern",
+  "pumpLabel": "Pumpe {n}",
+  "@pumpLabel": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "pumpDrinkHint": "z. B. Wodka, Cola, Saft \u2026",
+  "pumpAmountHint": "Menge"
 }

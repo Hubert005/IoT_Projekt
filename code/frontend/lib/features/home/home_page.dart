@@ -9,11 +9,14 @@ import '../../core/theme/app_colors.dart';
 import '../../main.dart';
 import '../../services/ble_connection.dart';
 import '../../services/connection_mode.dart';
+import '../../services/pump_config_store.dart';
 import '../game/photo_capture_page.dart';
 import '../recipes/recipes_page.dart';
 import 'components/bottom_nav_item.dart';
 import 'components/home_status_row.dart';
 import 'components/next_action_card.dart';
+import 'components/pump_config_button.dart';
+import 'components/pump_config_sheet.dart';
 import 'components/start_game_button.dart';
 
 enum _LinkState { initial, connected, unreachable }
@@ -45,6 +48,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadAndCheck() async {
+    if (!PumpConfigStore.instance.isLoaded) {
+      await PumpConfigStore.instance.load();
+    }
     _mode = await ConnectionModeStore.load();
 
     final prefs = await SharedPreferences.getInstance();
@@ -304,7 +310,13 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(height: 16),
         const Expanded(child: NextActionCard()),
-        const SizedBox(height: 28),
+        const SizedBox(height: 18),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          child: PumpConfigButton(
+            onTap: () => showPumpConfigSheet(context),
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: StartGameButton(

@@ -10,9 +10,7 @@ class TopHeader extends StatelessWidget {
     return Row(
       children: [
         const SizedBox(width: 12),
-        Expanded(
-          child: Text(title, style: AppTextStyles.headingSmall),
-        ),
+        Expanded(child: Text(title, style: AppTextStyles.headingSmall)),
       ],
     );
   }

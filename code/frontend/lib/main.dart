@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       valueListenable: localeNotifier,
       builder: (context, locale, _) {
         return MaterialApp(
-          title: 'IoT Drink Mixer',
+          title: 'Braincell Massacre',
           locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,

@@ -93,7 +93,10 @@ class _PhotoCapturePageState extends State<PhotoCapturePage> {
             children: [
               PhotoCaptureHeader(onBack: () => Navigator.pop(context)),
               const SizedBox(height: 28),
-              PhotoCaptureStepIndicator(player1Done: p1Done, player2Done: p2Done),
+              PhotoCaptureStepIndicator(
+                player1Done: p1Done,
+                player2Done: p2Done,
+              ),
               const SizedBox(height: 28),
               Expanded(
                 child: Column(

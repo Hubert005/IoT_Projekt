@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:iot_drink_mixer/core/theme/app_colors.dart';
 import '../../services/backend_service.dart';
+import '../../models/cocktail.dart';
+import '../../models/drink.dart';
 import '../../models/round_result.dart';
 import '../../services/drink_service.dart';
 import '../../services/mixer_service.dart';
@@ -36,6 +38,9 @@ class _GameScreenState extends State<GameScreen> {
   final List<RoundResult> _rounds = [];
   GamePhase _phase = GamePhase.waitingRound;
   int _currentRound = 1;
+  Drink? _drink;
+  CocktailData? _selectedCocktail;
+  int? _loserPlayer;
 
   int get _p1Wins => _rounds.where((r) => r.winner == 1).length;
   int get _p2Wins => _rounds.where((r) => r.winner == 2).length;
@@ -60,7 +65,6 @@ class _GameScreenState extends State<GameScreen> {
     await widget.backend.startGame();
     if (mounted) _playRound();
   }
-
 
   Future<void> _playRound() async {
     if (!mounted) return;
@@ -93,17 +97,24 @@ class _GameScreenState extends State<GameScreen> {
     setState(() => _phase = GamePhase.drinkSelecting);
 
     final loser = _seriesWinner == 1 ? 2 : 1;
-    final loserPath = loser == 1 ? widget.player1ImagePath : widget.player2ImagePath;
+    final loserPath =
+        loser == 1 ? widget.player1ImagePath : widget.player2ImagePath;
 
-    final drink = await widget.drinkService.selectDrink(
+    // [Phase 1] Get cocktail recommendation + drink mapping
+    final selection = await widget.drinkService.selectDrinkWithCocktail(
       loserPlayer: loser,
       loserImagePath: loserPath,
     );
     if (!mounted) return;
 
-    setState(() => _phase = GamePhase.drinkSending);
+    setState(() {
+      _loserPlayer = loser;
+      _selectedCocktail = selection.cocktail;
+      _drink = selection.drink;
+      _phase = GamePhase.drinkSending;
+    });
 
-    await widget.mixerService.orderDrink(drink);
+    await widget.mixerService.orderDrink(selection.drink);
     if (!mounted) return;
 
     setState(() => _phase = GamePhase.drinkReady);
@@ -147,8 +158,10 @@ class _GameScreenState extends State<GameScreen> {
                       const SizedBox(height: 16),
                       DrinkSection(
                         phase: _phase,
-                        onBackToStart: () =>
-                            Navigator.popUntil(context, (r) => r.isFirst),
+                        cocktail: _selectedCocktail,
+                        loserPlayer: _loserPlayer,
+                        onBackToStart:
+                            () => Navigator.popUntil(context, (r) => r.isFirst),
                       ),
                     ],
                   ],

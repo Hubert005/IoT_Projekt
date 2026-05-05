@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/recipe_models.dart';
@@ -12,23 +12,24 @@ class RecipeFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(22)),
       child: Row(
         children: [
           _FilterChipButton(
-            label: 'All',
+            label: l10n.filterAll,
             active: selected == RecipeFilter.all,
             onTap: () => onSelected(RecipeFilter.all),
           ),
           _FilterChipButton(
-            label: 'Available',
+            label: l10n.filterAvailable,
             active: selected == RecipeFilter.available,
             onTap: () => onSelected(RecipeFilter.available),
           ),
           _FilterChipButton(
-            label: 'Favorites',
+            label: l10n.filterFavorites,
             active: selected == RecipeFilter.favorites,
             onTap: () => onSelected(RecipeFilter.favorites),
           ),

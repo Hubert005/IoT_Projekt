@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:iot_drink_mixer/core/theme/app_colors.dart';
+import '../../services/backend_service.dart';
 import '../../models/cocktail.dart';
 import '../../models/drink.dart';
 import '../../models/round_result.dart';
-import '../../services/ble_backend_service.dart';
-import '../../services/ble_service.dart';
 import '../../services/drink_service.dart';
 import '../../services/mixer_service.dart';
 import 'extension/game_phase.dart';
-import 'widgets/ble_debug_panel.dart';
 import 'widgets/drink_section.dart';
 import 'widgets/game_result_header.dart';
 import 'widgets/player_cards_row.dart';
@@ -17,7 +15,7 @@ import 'widgets/series_stats_card.dart';
 class GameScreen extends StatefulWidget {
   final String player1ImagePath;
   final String player2ImagePath;
-  final BleBackendService backend;
+  final BackendService backend;
   final DrinkService drinkService;
   final MixerService mixerService;
 
@@ -64,10 +62,7 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Future<void> _init() async {
-    if (BleService.instance.isConnected) {
-      await BleService.instance.send('start');
-      await BleService.instance.waitForMessage('start_ok');
-    }
+    await widget.backend.startGame();
     if (mounted) _playRound();
   }
 
@@ -106,8 +101,10 @@ class _GameScreenState extends State<GameScreen> {
         loser == 1 ? widget.player1ImagePath : widget.player2ImagePath;
 
     // [Phase 1] Get cocktail recommendation + drink mapping
-    final selection = await (widget.drinkService as dynamic)
-        .selectDrinkWithCocktail(loserPlayer: loser, loserImagePath: loserPath);
+    final selection = await widget.drinkService.selectDrinkWithCocktail(
+      loserPlayer: loser,
+      loserImagePath: loserPath,
+    );
     if (!mounted) return;
 
     setState(() {
@@ -127,14 +124,6 @@ class _GameScreenState extends State<GameScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      floatingActionButton:
-          BleService.instance.isConnected
-              ? FloatingActionButton.small(
-                onPressed: _openDebugPanel,
-                backgroundColor: Colors.white12,
-                child: const Icon(Icons.bug_report, color: Colors.white54),
-              )
-              : null,
       body: SafeArea(
         child: Column(
           children: [
@@ -182,18 +171,6 @@ class _GameScreenState extends State<GameScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  void _openDebugPanel() {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A1A1A),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => const BleDebugPanel(),
     );
   }
 }

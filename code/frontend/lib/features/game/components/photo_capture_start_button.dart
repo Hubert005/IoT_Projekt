@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 
 class PhotoCaptureStartButton extends StatelessWidget {
@@ -10,6 +10,7 @@ class PhotoCaptureStartButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Opacity(
       opacity: enabled ? 1.0 : 0.38,
       child: Container(
@@ -18,16 +19,15 @@ class PhotoCaptureStartButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(28),
-          boxShadow:
-              enabled
-                  ? [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.35),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                  : null,
+          boxShadow: enabled
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : null,
         ),
         child: Material(
           color: Colors.transparent,
@@ -35,14 +35,14 @@ class PhotoCaptureStartButton extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(28),
             onTap: enabled ? onTap : null,
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.sports_esports_rounded, color: Colors.white, size: 22),
-                SizedBox(width: 8),
+                const Icon(Icons.sports_esports_rounded, color: Colors.white, size: 22),
+                const SizedBox(width: 8),
                 Text(
-                  'SPIEL STARTEN',
-                  style: TextStyle(
+                  l10n.startGameAction,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
                     fontSize: 17,

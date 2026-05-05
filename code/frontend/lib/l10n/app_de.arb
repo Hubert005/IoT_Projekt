@@ -1,0 +1,125 @@
+{
+  "@@locale": "de",
+
+  "appHeading": "Gehirnzellen Massaker",
+
+  "navHome": "HOME",
+  "navRecipe": "REZEPT",
+
+  "dialogCancel": "Abbrechen",
+
+  "bleStatus": "BLUETOOTH STATUS",
+  "bleInfoDefault": "Tippen um nach ESP32 zu suchen",
+  "bleScanning": "Suche ESP32 …",
+  "bleConnected": "Verbunden: {name}",
+  "@bleConnected": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "bleNotFound": "ESP32 nicht gefunden",
+  "bleConnectedSnackbar": "Bluetooth verbunden",
+  "bleConnectingSnackbar": "Verbinde über Bluetooth …",
+  "bleConnectFailed": "Bluetooth-Verbindung fehlgeschlagen",
+  "bleDisconnect": "Trennen",
+
+  "nextAction": "NÄCHSTE AKTION",
+  "nextActionTitle": "Becher platzieren und Spiel starten",
+  "nextActionDescription": "Nach dem Start machen beide Spieler ein Foto. Dann beginnt das Schere-Stein-Papier-Spiel – das Ergebnis kommt live vom Arduino. Der Verlierer bekommt anschließend automatisch seinen Drink gemixt. Der Fortschritt wird live auf dem Bildschirm angezeigt.",
+
+  "startGame": "SPIEL STARTEN",
+  "startGameAction": "SPIEL STARTEN",
+
+  "photoCaptureTitle": "Fotos aufnehmen",
+  "takePhoto": "Foto aufnehmen",
+  "photoReady": "Foto bereit ✓",
+  "noPhoto": "Noch kein Foto",
+
+  "playerLabel": "Spieler {n}",
+  "@playerLabel": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+
+  "seriesStats": "SERIES STATS  •  BEST OF {n}",
+  "@seriesStats": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "roundXofY": "Runde {current} von {total}",
+  "@roundXofY": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "player1Label": "SPIELER 1",
+  "player2Label": "SPIELER 2",
+
+  "gameResultHeading": "Spielergebnis",
+  "waitingForRound": "WARTE AUF RUNDE {n} …",
+  "@waitingForRound": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "resultRound": "ERGEBNIS RUNDE {n}",
+  "@resultRound": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "gameResultTitle": "SPIELERGEBNIS",
+  "drinkSelectingStatus": "DRINK WIRD ERMITTELT …",
+  "drinkSendingStatus": "WIRD AN MIXER GESCHICKT …",
+  "drinkReadyStatus": "DRINK BESTÄTIGT",
+
+  "badgeWinner": "WINNER",
+  "badgeLoser": "LOSER",
+  "badgeVictor": "SIEGER",
+  "badgeFocusTarget": "FOCUS TARGET",
+  "waitingLabel": "WARTE …",
+
+  "drinkDetermining": "Drink wird ermittelt …",
+  "drinkDeterminingDesc": "Verlierer bekommt seinen Spezial-Drink",
+  "aiAnalyzingPhoto": "KI analysiert Loser-Foto …",
+  "drinkBeingSelected": "Drink wird ausgewählt",
+  "drinkMixing": "Drink wird gemixt …",
+  "drinkSentToMixer": "Wird an Mixer geschickt",
+  "drinkBeingPrepared": "Dein Drink wird zubereitet!",
+  "placeUnderSensor": "Stell den Becher unter die Lichtschranke, dann startet das Pumpen.",
+  "backToStart": "ZURÜCK ZUM START",
+
+  "filterAll": "Alle",
+  "filterAvailable": "Verfügbar",
+  "filterFavorites": "Favoriten",
+  "searchHint": "Rezepte suchen...",
+  "aiRecommended": "KI EMPFOHLEN",
+  "totalVolume": "Gesamt: {ml} ml",
+  "@totalVolume": {
+    "placeholders": {
+      "ml": { "type": "int" }
+    }
+  },
+  "close": "Schließen",
+  "mixDetails": "Mix Details",
+  "statusReady": "BEREIT",
+  "statusLowStock": "WENIG VORRAT",
+  "statusRefill": "NACHFÜLLEN",
+  "craft": "Mixen",
+
+  "configurePumps": "PUMPEN KONFIGURIEREN",
+  "pumpConfigTitle": "Pumpen-Belegung",
+  "pumpConfigSubtitle": "Lege fest, hinter welcher Pumpe welcher Drink steckt und wie viel ml verfügbar sind. Die KI nutzt diese Angaben, um den Verlierer-Drink zu erstellen.",
+  "pumpConfigSave": "Speichern",
+  "pumpLabel": "Pumpe {n}",
+  "@pumpLabel": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "pumpDrinkHint": "z. B. Wodka, Cola, Saft …",
+  "pumpAmountHint": "Menge"
+}

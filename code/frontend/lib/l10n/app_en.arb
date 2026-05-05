@@ -1,0 +1,310 @@
+{
+  "@@locale": "en",
+
+  "appHeading": "Brain Cell Massacre",
+  "@appHeading": {
+    "description": "The main app title displayed in the header."
+  },
+
+  "navHome": "HOME",
+  "@navHome": {
+    "description": "Navigation bar label for the home tab."
+  },
+  "navRecipe": "RECIPE",
+  "@navRecipe": {
+    "description": "Navigation bar label for the recipes tab."
+  },
+
+  "dialogCancel": "Cancel",
+  "@dialogCancel": {
+    "description": "Cancel button label used in dialogs."
+  },
+
+  "bleStatus": "BLUETOOTH STATUS",
+  "@bleStatus": {
+    "description": "Section header for the Bluetooth status area."
+  },
+  "bleInfoDefault": "Tap to scan for ESP32",
+  "@bleInfoDefault": {
+    "description": "Default info text shown before the user initiates a Bluetooth scan."
+  },
+  "bleScanning": "Scanning for ESP32 …",
+  "@bleScanning": {
+    "description": "Status text shown while scanning for the ESP32 device."
+  },
+  "bleConnected": "Connected: {name}",
+  "@bleConnected": {
+    "description": "Status text shown when connected to a Bluetooth device.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "bleNotFound": "ESP32 not found – is it powered on?",
+  "@bleNotFound": {
+    "description": "Error text shown when the ESP32 device was not found during a scan."
+  },
+  "bleConnectedSnackbar": "Bluetooth connected",
+  "@bleConnectedSnackbar": {
+    "description": "Snackbar message shown on a successful Bluetooth connection."
+  },
+  "bleConnectingSnackbar": "Connecting via Bluetooth …",
+  "@bleConnectingSnackbar": {
+    "description": "Snackbar message shown while a Bluetooth connection is being established."
+  },
+  "bleConnectFailed": "Bluetooth connection failed",
+  "@bleConnectFailed": {
+    "description": "Error message shown when the Bluetooth connection attempt fails."
+  },
+  "bleDisconnect": "Disconnect",
+  "@bleDisconnect": {
+    "description": "Button label to disconnect the current Bluetooth connection."
+  },
+
+  "nextAction": "NEXT ACTION",
+  "@nextAction": {
+    "description": "Section header for the next-action instructions on the home screen."
+  },
+  "nextActionTitle": "Place cup and start game",
+  "@nextActionTitle": {
+    "description": "Title for the next-action instruction card."
+  },
+  "nextActionDescription": "After starting, both players take a photo. Then the Rock-Paper-Scissors game begins – the result comes live from the Arduino. The loser automatically gets their drink mixed. Progress is shown live on the screen.",
+  "@nextActionDescription": {
+    "description": "Full description of the game flow shown in the next-action card."
+  },
+
+  "startGame": "START GAME",
+  "@startGame": {
+    "description": "Label for the start-game button."
+  },
+  "startGameAction": "START GAME",
+  "@startGameAction": {
+    "description": "Action button label that triggers the start of a new game."
+  },
+
+  "photoCaptureTitle": "Take Photos",
+  "@photoCaptureTitle": {
+    "description": "Title shown on the photo capture screen."
+  },
+  "takePhoto": "Take photo",
+  "@takePhoto": {
+    "description": "Button label to capture a photo."
+  },
+  "photoReady": "Photo ready ✓",
+  "@photoReady": {
+    "description": "Status text shown when a player's photo has been taken."
+  },
+  "noPhoto": "No photo yet",
+  "@noPhoto": {
+    "description": "Status text shown when a player has not yet taken a photo."
+  },
+
+  "playerLabel": "Player {n}",
+  "@playerLabel": {
+    "description": "Label identifying a player by their number.",
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+
+  "seriesStats": "SERIES STATS  •  BEST OF {n}",
+  "@seriesStats": {
+    "description": "Header showing series statistics and the best-of count.",
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "roundXofY": "Round {current} of {total}",
+  "@roundXofY": {
+    "description": "Indicator showing the current round number out of the total rounds.",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "player1Label": "PLAYER 1",
+  "@player1Label": {
+    "description": "Fixed label for player 1."
+  },
+  "player2Label": "PLAYER 2",
+  "@player2Label": {
+    "description": "Fixed label for player 2."
+  },
+
+  "gameResultHeading": "Game Result",
+  "@gameResultHeading": {
+    "description": "Heading for the game result section."
+  },
+  "waitingForRound": "WAITING FOR ROUND {n} …",
+  "@waitingForRound": {
+    "description": "Status text shown while waiting for a specific round's result.",
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "resultRound": "RESULT ROUND {n}",
+  "@resultRound": {
+    "description": "Header indicating the result is for a specific round number.",
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "gameResultTitle": "GAME RESULT",
+  "@gameResultTitle": {
+    "description": "Title displayed on the final game result screen."
+  },
+  "drinkSelectingStatus": "DETERMINING DRINK …",
+  "@drinkSelectingStatus": {
+    "description": "Status text shown while the loser's drink is being determined."
+  },
+  "drinkSendingStatus": "SENDING TO MIXER …",
+  "@drinkSendingStatus": {
+    "description": "Status text shown while the drink order is being sent to the mixer."
+  },
+  "drinkReadyStatus": "DRINK CONFIRMED",
+  "@drinkReadyStatus": {
+    "description": "Status text shown when the mixer has confirmed the drink order."
+  },
+
+  "badgeWinner": "WINNER",
+  "@badgeWinner": {
+    "description": "Badge label shown on the winner of a round."
+  },
+  "badgeLoser": "LOSER",
+  "@badgeLoser": {
+    "description": "Badge label shown on the loser of a round."
+  },
+  "badgeVictor": "VICTOR",
+  "@badgeVictor": {
+    "description": "Badge label shown on the overall victor of the game series."
+  },
+  "badgeFocusTarget": "FOCUS TARGET",
+  "@badgeFocusTarget": {
+    "description": "Badge label shown on the overall loser of the game series who receives the drink."
+  },
+  "waitingLabel": "WAITING …",
+  "@waitingLabel": {
+    "description": "Generic waiting status label."
+  },
+
+  "drinkDetermining": "Determining drink …",
+  "@drinkDetermining": {
+    "description": "Status text while the AI is determining the loser's drink."
+  },
+  "drinkDeterminingDesc": "Loser gets their special drink",
+  "@drinkDeterminingDesc": {
+    "description": "Description shown below the drink-determining status."
+  },
+  "aiAnalyzingPhoto": "AI analyzing loser photo …",
+  "@aiAnalyzingPhoto": {
+    "description": "Status text shown while the AI analyzes the loser's photo to select a drink."
+  },
+  "drinkBeingSelected": "Drink being selected",
+  "@drinkBeingSelected": {
+    "description": "Status text shown while a drink is being selected for the loser."
+  },
+  "drinkMixing": "Mixing drink …",
+  "@drinkMixing": {
+    "description": "Status text shown while the mixer is preparing the drink."
+  },
+  "drinkSentToMixer": "Sent to mixer",
+  "@drinkSentToMixer": {
+    "description": "Status text shown after the drink order has been sent to the mixer."
+  },
+  "drinkBeingPrepared": "Your drink is being prepared!",
+  "@drinkBeingPrepared": {
+    "description": "Message shown to the loser when their drink preparation has started."
+  },
+  "placeUnderSensor": "Place cup under light sensor, then pumping starts.",
+  "@placeUnderSensor": {
+    "description": "Instruction telling the user to place their cup under the light sensor to trigger the pumps."
+  },
+  "backToStart": "BACK TO START",
+  "@backToStart": {
+    "description": "Button label to navigate back to the start/home screen."
+  },
+
+  "filterAll": "All",
+  "@filterAll": {
+    "description": "Recipe filter chip label to show all recipes."
+  },
+  "filterAvailable": "Available",
+  "@filterAvailable": {
+    "description": "Recipe filter chip label to show only recipes with sufficient stock."
+  },
+  "filterFavorites": "Favorites",
+  "@filterFavorites": {
+    "description": "Recipe filter chip label to show only favorited recipes."
+  },
+  "searchHint": "Search recipes...",
+  "@searchHint": {
+    "description": "Placeholder hint text in the recipe search input field."
+  },
+  "aiRecommended": "AI RECOMMENDED",
+  "@aiRecommended": {
+    "description": "Badge label shown on recipes recommended by the AI."
+  },
+  "totalVolume": "Total: {ml} ml",
+  "@totalVolume": {
+    "description": "Label showing the total volume of a drink recipe in millilitres.",
+    "placeholders": {
+      "ml": { "type": "int" }
+    }
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Generic close button label."
+  },
+  "mixDetails": "Mix Details",
+  "@mixDetails": {
+    "description": "Title for the dialog showing the detailed ingredient breakdown of a recipe."
+  },
+  "statusReady": "READY",
+  "@statusReady": {
+    "description": "Recipe status badge indicating the drink is ready to be mixed."
+  },
+  "statusLowStock": "LOW STOCK",
+  "@statusLowStock": {
+    "description": "Recipe status badge indicating one or more ingredients are running low."
+  },
+  "statusRefill": "REFILL",
+  "@statusRefill": {
+    "description": "Recipe status badge indicating an ingredient needs to be refilled."
+  },
+  "craft": "Craft",
+  "@craft": {
+    "description": "Button label to start mixing/crafting a selected drink recipe."
+  },
+
+  "configurePumps": "CONFIGURE PUMPS",
+  "@configurePumps": {
+    "description": "Button or section label to open the pump configuration screen."
+  },
+  "pumpConfigTitle": "Pump Assignment",
+  "@pumpConfigTitle": {
+    "description": "Title for the pump configuration screen."
+  },
+  "pumpConfigSubtitle": "Set which drink is behind each pump and how many ml are available. The AI uses this info to create the loser drink.",
+  "@pumpConfigSubtitle": {
+    "description": "Explanatory subtitle on the pump configuration screen."
+  },
+  "pumpConfigSave": "Save",
+  "@pumpConfigSave": {
+    "description": "Save button label in the pump configuration screen."
+  },
+  "pumpLabel": "Pump {n}",
+  "@pumpLabel": {
+    "description": "Label for a pump identified by its number.",
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "pumpDrinkHint": "e.g. Vodka, Cola, Juice …",
+  "@pumpDrinkHint": {
+    "description": "Hint text for the drink name input field in pump configuration."
+  },
+  "pumpAmountHint": "Amount",
+  "@pumpAmountHint": {
+    "description": "Hint text for the amount (ml) input field in pump configuration."
+  }
+}

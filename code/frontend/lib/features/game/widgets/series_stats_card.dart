@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/round_result.dart';
@@ -24,6 +24,7 @@ class SeriesStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -37,13 +38,16 @@ class SeriesStatsCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'SERIES STATS  •  BEST OF $seriesLength',
+                l10n.seriesStats(seriesLength),
                 style: AppTextStyles.captionSmall.copyWith(
                   letterSpacing: 0.6,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              Text('Runde ${rounds.length} von $seriesLength', style: AppTextStyles.captionSmall),
+              Text(
+                l10n.roundXofY(rounds.length, seriesLength),
+                style: AppTextStyles.captionSmall,
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -56,17 +60,16 @@ class SeriesStatsCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'PLAYER 1',
+                      l10n.player1Label,
                       style: AppTextStyles.captionSmall.copyWith(letterSpacing: 0.5),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '$player1Wins',
                       style: AppTextStyles.headingLarge.copyWith(
-                        color:
-                            postGame && seriesWinner == 1
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                        color: postGame && seriesWinner == 1
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -96,17 +99,16 @@ class SeriesStatsCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'PLAYER 2',
+                      l10n.player2Label,
                       style: AppTextStyles.captionSmall.copyWith(letterSpacing: 0.5),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '$player2Wins',
                       style: AppTextStyles.headingLarge.copyWith(
-                        color:
-                            postGame && seriesWinner == 2
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                        color: postGame && seriesWinner == 2
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -139,16 +141,15 @@ class _RoundDot extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: active ? color : AppColors.border, width: 1.5),
           ),
-          child:
-              active
-                  ? Center(
-                    child: Container(
-                      width: 9,
-                      height: 9,
-                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                    ),
-                  )
-                  : null,
+          child: active
+              ? Center(
+                  child: Container(
+                    width: 9,
+                    height: 9,
+                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                  ),
+                )
+              : null,
         ),
         const SizedBox(height: 3),
         Text(

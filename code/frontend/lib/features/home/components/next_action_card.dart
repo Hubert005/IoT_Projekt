@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
@@ -8,6 +8,7 @@ class NextActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
@@ -59,13 +60,13 @@ class NextActionCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'NEXT ACTION',
+                  l10n.nextAction,
                   style: AppTextStyles.labelSmall.copyWith(color: AppColors.primary),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            Text('Becher platzieren und Spiel starten', style: AppTextStyles.bodyLarge),
+            Text(l10n.nextActionTitle, style: AppTextStyles.bodyLarge),
             const SizedBox(height: 10),
             Expanded(
               child: Scrollbar(
@@ -75,11 +76,7 @@ class NextActionCard extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: Text(
-                      'Nach dem Start machen beide Spieler ein Foto. '
-                      'Dann beginnt das Schere-Stein-Papier-Spiel – das Ergebnis '
-                      'kommt live vom Arduino. Der Verlierer bekommt anschließend '
-                      'automatisch seinen Drink gemixt. Der Fortschritt wird live '
-                      'auf dem Bildschirm angezeigt.',
+                      l10n.nextActionDescription,
                       style: AppTextStyles.bodySmall.copyWith(height: 1.55),
                     ),
                   ),

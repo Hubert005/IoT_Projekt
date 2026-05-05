@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../models/recipe_models.dart';
@@ -12,10 +12,11 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final (label, background, foreground) = switch (status) {
-      RecipeStatus.ready => ('READY', const Color(0xFF0C3A2A), AppColors.success),
-      RecipeStatus.lowStock => ('LOW STOCK', const Color(0xFF3E3213), AppColors.warning),
-      RecipeStatus.refillRequired => ('REFILL', const Color(0xFF411C26), AppColors.error),
+      RecipeStatus.ready => (l10n.statusReady, const Color(0xFF0C3A2A), AppColors.success),
+      RecipeStatus.lowStock => (l10n.statusLowStock, const Color(0xFF3E3213), AppColors.warning),
+      RecipeStatus.refillRequired => (l10n.statusRefill, const Color(0xFF411C26), AppColors.error),
     };
 
     return Container(

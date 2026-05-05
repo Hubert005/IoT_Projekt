@@ -1,16 +1,20 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:iot_drink_mixer/core/theme/app_text_styles.dart';
 import '../../core/theme/app_colors.dart';
-import '../../services/ble_service.dart';
+import '../../main.dart';
+import '../../services/ble_connection.dart';
+import '../../services/pump_config_store.dart';
 import '../game/photo_capture_page.dart';
 import '../recipes/recipes_page.dart';
 import 'components/bottom_nav_item.dart';
 import 'components/home_status_row.dart';
 import 'components/next_action_card.dart';
+import 'components/pump_config_button.dart';
+import 'components/pump_config_sheet.dart';
 import 'components/start_game_button.dart';
+
+enum _LinkState { initial, connected, unreachable }
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,38 +25,91 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _navIndex = 0;
-  bool _bleConnected = false;
-  String? _bleDeviceName;
-  StreamSubscription<bool>? _connSub;
+
+  _LinkState _linkState = _LinkState.initial;
+  bool _connected = false;
+  bool _busy = false;
+  String? _bleDeviceLabel;
 
   @override
   void initState() {
     super.initState();
-    _bleConnected = BleService.instance.isConnected;
-    _bleDeviceName = BleService.instance.deviceName;
-    _connSub = BleService.instance.connectionStream.listen((connected) {
-      if (mounted) {
-        setState(() {
-          _bleConnected = connected;
-          _bleDeviceName = connected ? BleService.instance.deviceName : null;
-        });
-      }
+    _loadAndCheck();
+  }
+
+  Future<void> _loadAndCheck() async {
+    if (!PumpConfigStore.instance.isLoaded) {
+      await PumpConfigStore.instance.load();
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _connected = BleConnection.instance.isConnected;
+      _linkState = _connected ? _LinkState.connected : _LinkState.initial;
     });
   }
 
-  @override
-  void dispose() {
-    _connSub?.cancel();
-    super.dispose();
+  Future<void> _connectBle() async {
+    final l10n = AppLocalizations.of(context)!;
+    if (_busy) return;
+    setState(() => _busy = true);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.bleConnectingSnackbar)),
+    );
+
+    bool ok = false;
+    try {
+      ok = await BleConnection.instance.connect();
+      if (ok) {
+        final pong = await BleConnection.instance.ping();
+        ok = pong;
+      }
+    } catch (_) {
+      ok = false;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _connected = ok;
+      _linkState = ok ? _LinkState.connected : _LinkState.unreachable;
+      _bleDeviceLabel =
+          ok ? (BleConnection.instance.connectedDeviceId ?? 'ESP32') : null;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok ? l10n.bleConnectedSnackbar : l10n.bleConnectFailed),
+      ),
+    );
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────
+  Future<void> _disconnectBle() async {
+    await BleConnection.instance.disconnect();
+    if (!mounted) return;
+    setState(() {
+      _connected = false;
+      _linkState = _LinkState.initial;
+      _bleDeviceLabel = null;
+    });
+  }
+
+  void _toggleLocale() {
+    localeNotifier.value = localeNotifier.value.languageCode == 'de'
+        ? const Locale('en')
+        : const Locale('de');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(child: Column(children: [Expanded(child: _buildBody()), _buildBottomNav()])),
+      body: SafeArea(
+        child: Column(
+          children: [Expanded(child: _buildBody()), _buildBottomNav()],
+        ),
+      ),
     );
   }
 
@@ -65,48 +122,81 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ── Home Tab ────────────────────────────────────────────────────────────
-
   Widget _buildHome() {
+    final l10n = AppLocalizations.of(context)!;
+    final isDE = localeNotifier.value.languageCode == 'de';
+
+    final statusText = switch (_linkState) {
+      _LinkState.initial => l10n.bleInfoDefault,
+      _LinkState.connected => l10n.bleConnected(_bleDeviceLabel ?? 'ESP32'),
+      _LinkState.unreachable => l10n.bleNotFound,
+    };
+
+    final onCardTap =
+        _busy ? null : (_connected ? _disconnectBle : _connectBle);
+
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-          child: const Text('Gehirnzellen Massaker', style: AppTextStyles.headingUltraLarge),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.appHeading,
+                  style: AppTextStyles.headingUltraLarge,
+                ),
+              ),
+              GestureDetector(
+                onTap: _toggleLocale,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Text(
+                    isDE ? 'EN' : 'DE',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: HomeStatusRow(
-            bleConnected: _bleConnected,
-            bleDeviceName: _bleDeviceName,
-            onBleTap: _showBleScanSheet,
+            title: l10n.bleStatus,
+            statusInfo: statusText,
+            connected: _connected,
+            iconConnected: Icons.bluetooth_connected,
+            iconDisconnected: Icons.bluetooth_disabled,
+            onTap: onCardTap,
           ),
         ),
         const SizedBox(height: 16),
         const Expanded(child: NextActionCard()),
-        const SizedBox(height: 28),
-        if (!_bleConnected)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-            child: OutlinedButton.icon(
-              onPressed: () {
-                BleService.instance.enableTestMode();
-              },
-              icon: const Icon(Icons.bug_report, size: 16),
-              label: const Text('Test Modus (ohne ESP32)'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white38,
-                side: const BorderSide(color: Colors.white12),
-                minimumSize: const Size.fromHeight(40),
-              ),
-            ),
+        const SizedBox(height: 18),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          child: PumpConfigButton(
+            onTap: () => showPumpConfigSheet(context),
           ),
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: StartGameButton(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const PhotoCapturePage()),
+              MaterialPageRoute(
+                builder: (_) => const PhotoCapturePage(),
+              ),
             ),
           ),
         ),
@@ -114,177 +204,32 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ── BLE Scan Sheet ──────────────────────────────────────────────────────
-
-  void _showBleScanSheet() {
-    BleService.instance.startScan();
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => const _BleScanSheet(),
-    ).whenComplete(BleService.instance.stopScan);
-  }
-
-  // ── Bottom Nav ──────────────────────────────────────────────────────────
-
   Widget _buildBottomNav() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
       decoration: BoxDecoration(
         color: AppColors.background,
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06), width: 1)),
+        border: Border(
+            top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.06), width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           BottomNavItem(
             icon: Icons.grid_view_rounded,
-            label: 'HOME',
+            label: l10n.navHome,
             isActive: _navIndex == 0,
             onTap: () => setState(() => _navIndex = 0),
           ),
           BottomNavItem(
             icon: Icons.menu_book_rounded,
-            label: 'RECIPE',
+            label: l10n.navRecipe,
             isActive: _navIndex == 1,
             onTap: () => setState(() => _navIndex = 1),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── BLE Scan Bottom Sheet ─────────────────────────────────────────────────────
-
-class _BleScanSheet extends StatefulWidget {
-  const _BleScanSheet();
-
-  @override
-  State<_BleScanSheet> createState() => _BleScanSheetState();
-}
-
-class _BleScanSheetState extends State<_BleScanSheet> {
-  String? _connectingId;
-
-  Future<void> _connect(BluetoothDevice device) async {
-    setState(() => _connectingId = device.remoteId.str);
-    try {
-      await BleService.instance.connect(device);
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        setState(() => _connectingId = null);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Verbindung fehlgeschlagen: $e')),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  'BLE Gerät verbinden',
-                  style: AppTextStyles.labelMedium.copyWith(fontSize: 16),
-                ),
-                const Spacer(),
-                StreamBuilder<bool>(
-                  stream: BleService.instance.isScanning,
-                  builder: (_, snap) {
-                    if (snap.data ?? false) {
-                      return const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.success,
-                        ),
-                      );
-                    }
-                    return TextButton(
-                      onPressed: BleService.instance.startScan,
-                      child: const Text('Neu scannen'),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            StreamBuilder<List<ScanResult>>(
-              stream: BleService.instance.scanResults,
-              builder: (_, snap) {
-                final results = snap.data ?? [];
-                if (results.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(
-                      child: Text(
-                        'Suche nach BLE-Geräten…',
-                        style: TextStyle(color: Colors.white54),
-                      ),
-                    ),
-                  );
-                }
-                return ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 260),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: results.length,
-                    itemBuilder: (_, i) {
-                      final device = results[i].device;
-                      final name = device.platformName.isNotEmpty
-                          ? device.platformName
-                          : device.remoteId.str;
-                      final connecting = _connectingId == device.remoteId.str;
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.bluetooth, color: AppColors.success),
-                        title: Text(name, style: const TextStyle(color: Colors.white)),
-                        subtitle: Text(
-                          device.remoteId.str,
-                          style: const TextStyle(color: Colors.white54, fontSize: 11),
-                        ),
-                        trailing: connecting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : null,
-                        onTap: connecting ? null : () => _connect(device),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-            if (BleService.instance.isConnected) ...[
-              const Divider(color: Colors.white12),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.bluetooth_disabled, color: Colors.redAccent),
-                title: const Text('Trennen', style: TextStyle(color: Colors.redAccent)),
-                onTap: () async {
-                  await BleService.instance.disconnect();
-                  if (mounted) Navigator.pop(context);
-                },
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }

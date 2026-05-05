@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/cocktail.dart';
@@ -22,6 +22,7 @@ class DrinkSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isReady = phase == GamePhase.drinkReady;
 
     return AnimatedContainer(
@@ -43,17 +44,17 @@ class DrinkSection extends StatelessWidget {
       ),
       child: switch (phase) {
         GamePhase.gameOver => _drinkStatusRow(
-          color: AppColors.warning,
-          title: 'Drink wird ermittelt …',
-          subtitle: 'Verlierer bekommt seinen Spezial-Drink',
-          loading: true,
-        ),
+            color: AppColors.warning,
+            title: l10n.drinkDetermining,
+            subtitle: l10n.drinkDeterminingDesc,
+            loading: true,
+          ),
         GamePhase.drinkSelecting => _drinkStatusRow(
-          color: AppColors.primary,
-          title: 'KI analysiert Loser-Foto …',
-          subtitle: 'Drink wird ausgewählt',
-          loading: true,
-        ),
+            color: AppColors.primary,
+            title: l10n.aiAnalyzingPhoto,
+            subtitle: l10n.drinkBeingSelected,
+            loading: true,
+          ),
         GamePhase.drinkSending => _drinkStatusRow(
           color: AppColors.warning,
           title: 'Drink wird gemixt …',

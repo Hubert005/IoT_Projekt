@@ -1,38 +1,43 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import 'status_card.dart';
 
 class HomeStatusRow extends StatelessWidget {
-  final bool bleConnected;
-  final String? bleDeviceName;
-  final VoidCallback? onBleTap;
+  final String statusInfo;
+  final bool connected;
+  final VoidCallback? onTap;
+  final String? title;
+  final IconData? iconConnected;
+  final IconData? iconDisconnected;
 
   const HomeStatusRow({
     super.key,
-    this.bleConnected = false,
-    this.bleDeviceName,
-    this.onBleTap,
+    required this.statusInfo,
+    this.connected = false,
+    this.onTap,
+    this.title,
+    this.iconConnected,
+    this.iconDisconnected,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         const SizedBox(width: 36),
         Expanded(
           child: GestureDetector(
-            onTap: onBleTap,
+            onTap: onTap,
             child: StatusCard(
-              title: 'BLE STATUS',
-              value: bleConnected
-                  ? (bleDeviceName ?? 'Verbunden')
-                  : 'Tippen zum Verbinden',
-              valueColor: bleConnected ? AppColors.success : AppColors.textPrimary,
-              showDot: bleConnected,
-              trailingIcon: bleConnected
-                  ? Icons.bluetooth_connected
-                  : Icons.bluetooth,
+              title: title ?? l10n.bleStatus,
+              value: statusInfo,
+              valueColor: connected ? AppColors.success : AppColors.textPrimary,
+              showDot: connected,
+              trailingIcon: connected
+                  ? (iconConnected ?? Icons.bluetooth_connected)
+                  : (iconDisconnected ?? Icons.bluetooth_disabled),
             ),
           ),
         ),

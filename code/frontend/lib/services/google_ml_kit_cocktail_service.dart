@@ -1,196 +1,128 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 
-import '../data/cocktail_catalog.dart';
 import '../models/cocktail.dart';
 import 'cocktail_service.dart';
 import 'image_analyzer_service.dart';
 
 /// Real ML Kit implementation of CocktailService.
-/// Analyzes loser's photo and matches it to a cocktail using ML-based scoring.
+/// Analyzes the loser's photo and matches it to one of the given [candidates]
+/// using generic mood-tag scoring, so it works with any dynamically generated
+/// cocktail pool (not a fixed catalog).
 class GoogleMLKitCocktailService implements CocktailService {
   final ImageAnalyzerService _analyzer;
 
   GoogleMLKitCocktailService({ImageAnalyzerService? analyzer})
-    : _analyzer = analyzer ?? ImageAnalyzerService();
+      : _analyzer = analyzer ?? ImageAnalyzerService();
 
   @override
-  Future<CocktailData> selectCocktail({required String loserImagePath}) async {
-    try {
-      // Ensure analyzer is initialized
-      await _analyzer.initialize();
+  Future<CocktailData> selectCocktail({
+    required String loserImagePath,
+    required List<CocktailData> candidates,
+  }) async {
+    assert(candidates.isNotEmpty, 'selectCocktail requires a non-empty pool');
+    if (candidates.length == 1) return candidates.first;
 
-      // Analyze the loser's image
+    try {
+      await _analyzer.initialize();
       final profile = await _analyzer.analyzeImage(loserImagePath);
 
       if (!profile.faceDetected) {
-        // Fallback: return random cocktail if no face detected
-        return CocktailCatalog.getRandom();
+        return candidates[Random().nextInt(candidates.length)];
       }
 
-      // Score each cocktail based on image profile
-      final scores = <String, double>{
-        'long_island': _scoreLongIsland(profile),
-        'old_fashioned': _scoreOldFashioned(profile),
-        'mojito': _scoreMojito(profile),
-        'zombie': _scoreZombie(profile),
-      };
+      final weights = _moodWeights(profile);
 
-      // Find best match
-      final bestId =
-          scores.entries.reduce((a, b) => a.value > b.value ? a : b).key;
-      final selected =
-          CocktailCatalog.getById(bestId) ?? CocktailCatalog.getRandom();
-
-      return selected;
+      CocktailData best = candidates.first;
+      double bestScore = double.negativeInfinity;
+      for (final c in candidates) {
+        final score = _scoreByTags(c.pairingTags, weights);
+        if (score > bestScore) {
+          bestScore = score;
+          best = c;
+        }
+      }
+      return best;
     } catch (e) {
       debugPrint('Error in GoogleMLKitCocktailService: $e');
-      // Fallback to random on error
-      return CocktailCatalog.getRandom();
+      return candidates[Random().nextInt(candidates.length)];
     }
   }
 
-  /// Score for "Long Island Iced Tea" - confident, energetic, bold
-  double _scoreLongIsland(ImageProfile profile) {
-    double score = 0.0;
-
-    // High confidence for strong/serious expressions
-    if (profile.emotion == 'neutral' || profile.emotion == 'sad') {
-      score += 0.3; // Neutral/serious → complex drink
+  /// Sum the mood weights for a candidate's tags. A tiny base weight per tag
+  /// keeps the result stable when none of the tags are emphasised.
+  double _scoreByTags(List<String> tags, Map<String, double> weights) {
+    double score = 0;
+    for (final tag in tags) {
+      score += (weights[tag.toLowerCase()] ?? 0.0) + 0.01;
     }
-
-    // Head turned away or tilted → confident posture
-    if (profile.headEulerAngleY != null &&
-        profile.headEulerAngleY!.abs() > 15) {
-      score += 0.2; // Turned head suggests confidence
-    }
-
-    // Dark/serious labels
-    if (_labelsContain(profile, ['dark', 'serious', 'intense', 'bold'])) {
-      score += 0.3;
-    }
-
-    // Eyes open = alert/aware
-    final avgEyeOpen =
-        ((profile.estimatedLeftEyeOpen ?? 0.5) +
-            (profile.estimatedRightEyeOpen ?? 0.5)) /
-        2;
-    score += avgEyeOpen * 0.2;
-
     return score;
   }
 
-  /// Score for "Old Fashioned" - sophisticated, calm, warm
-  double _scoreOldFashioned(ImageProfile profile) {
-    double score = 0.0;
+  /// Translate the analyzed image into per-tag weights.
+  Map<String, double> _moodWeights(ImageProfile profile) {
+    final w = <String, double>{};
+    void add(String tag, double v) => w[tag] = (w[tag] ?? 0) + v;
 
-    // Neutral expression preferred
-    if (profile.emotion == 'neutral') {
-      score += 0.4;
+    // Expression / emotion.
+    switch (profile.emotion) {
+      case 'happy':
+        for (final t in ['happy', 'fresh', 'light', 'colorful', 'playful', 'young']) {
+          add(t, 0.5);
+        }
+        break;
+      case 'neutral':
+        for (final t in ['sophisticated', 'calm', 'warm', 'classic', 'traditional']) {
+          add(t, 0.4);
+        }
+        break;
+      case 'sad':
+        for (final t in ['dark', 'serious', 'mysterious', 'intense', 'complex']) {
+          add(t, 0.4);
+        }
+        break;
     }
 
-    // Warm/vintage labels
-    if (_labelsContain(profile, [
-      'warm',
-      'brown',
-      'vintage',
-      'classic',
-      'wood',
-    ])) {
-      score += 0.3;
-    }
-
-    // Calm posture (head not too tilted)
-    if (profile.headEulerAngleZ != null &&
-        profile.headEulerAngleZ!.abs() < 10) {
-      score += 0.2;
-    }
-
-    // Slight smile ok, not big grin
-    if (profile.estimatedSmile != null &&
-        profile.estimatedSmile! > 0.2 &&
-        profile.estimatedSmile! < 0.5) {
-      score += 0.2;
-    }
-
-    return score;
-  }
-
-  /// Score for "Mojito" - happy, fresh, light, colorful
-  double _scoreMojito(ImageProfile profile) {
-    double score = 0.0;
-
-    // Happy expression is key
-    if (profile.emotion == 'happy') {
-      score += 0.5; // Strong preference for smiling
-    }
-
-    // Bright/fresh labels
-    if (_labelsContain(profile, [
-      'light',
-      'green',
-      'blue',
-      'fresh',
-      'colorful',
-      'bright',
-      'young',
-    ])) {
-      score += 0.3;
-    }
-
-    // Wide eyes = energetic
+    // Eye openness → energy.
     final avgEyeOpen =
-        ((profile.estimatedLeftEyeOpen ?? 0.5) +
-            (profile.estimatedRightEyeOpen ?? 0.5)) /
-        2;
+        ((profile.estimatedLeftEyeOpen ?? 0.5) + (profile.estimatedRightEyeOpen ?? 0.5)) / 2;
     if (avgEyeOpen > 0.7) {
-      score += 0.2;
+      for (final t in ['energetic', 'bold', 'adventurous']) {
+        add(t, 0.3);
+      }
     }
 
-    // Direct head position (not turned away)
-    if (profile.headEulerAngleY != null &&
-        profile.headEulerAngleY!.abs() < 20) {
-      score += 0.1;
+    // Head turned/tilted → confidence / boldness.
+    if ((profile.headEulerAngleY ?? 0).abs() > 15 || (profile.headEulerAngleZ ?? 0).abs() > 10) {
+      for (final t in ['confident', 'bold', 'adventurous', 'intense']) {
+        add(t, 0.25);
+      }
     }
 
-    return score;
+    // Image labels → matching tags.
+    const labelTagMap = {
+      'tropical': ['tropical', 'colorful', 'adventurous'],
+      'green': ['fresh', 'light'],
+      'blue': ['fresh', 'calm'],
+      'orange': ['colorful', 'energetic'],
+      'red': ['bold', 'intense'],
+      'yellow': ['happy', 'colorful'],
+      'dark': ['dark', 'serious', 'mysterious'],
+      'wood': ['warm', 'classic', 'traditional'],
+      'bright': ['light', 'fresh', 'colorful'],
+    };
+    labelTagMap.forEach((label, tags) {
+      if (_labelsContain(profile, [label])) {
+        for (final t in tags) {
+          add(t, 0.3);
+        }
+      }
+    });
+
+    return w;
   }
 
-  /// Score for "Zombie" - adventurous, bold, tropical, mysterious
-  double _scoreZombie(ImageProfile profile) {
-    double score = 0.0;
-
-    // Both happy and intense work
-    if (profile.emotion == 'happy') {
-      score += 0.25; // Playful energy
-    } else if (profile.emotion == 'sad' || profile.emotion == 'neutral') {
-      score += 0.2; // Mysterious mood
-    }
-
-    // Tropical/exotic labels
-    if (_labelsContain(profile, [
-      'tropical',
-      'exotic',
-      'colorful',
-      'orange',
-      'red',
-      'yellow',
-    ])) {
-      score += 0.35;
-    }
-
-    // Adventurous = head turned or tilted
-    if (profile.headEulerAngleY != null &&
-        profile.headEulerAngleY!.abs() > 10) {
-      score += 0.15;
-    }
-    if (profile.headEulerAngleZ != null && profile.headEulerAngleZ!.abs() > 8) {
-      score += 0.15;
-    }
-
-    return score;
-  }
-
-  /// Helper: Check if labels list contains any of the search terms
   bool _labelsContain(ImageProfile profile, List<String> searchTerms) {
     final lowerLabels = profile.labels.map((l) => l.toLowerCase()).toList();
     return searchTerms.any(

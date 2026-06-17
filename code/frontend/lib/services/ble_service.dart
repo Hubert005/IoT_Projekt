@@ -78,7 +78,7 @@ class BleService {
     if (_connected) await disconnect();
 
     _device = device;
-    await device.connect(autoConnect: false);
+    await device.connect(license: License.nonprofit, autoConnect: false);
 
     _connStateSub = device.connectionState.listen((state) {
       final conn = state == BluetoothConnectionState.connected;

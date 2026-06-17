@@ -38,6 +38,7 @@ class _GameScreenState extends State<GameScreen> {
   static const int _seriesLength = 3;
 
   final List<RoundResult> _rounds = [];
+  RoundResult? _lastResult;
   GamePhase _phase = GamePhase.waitingRound;
   int _currentRound = 1;
   Drink? _drink;
@@ -78,7 +79,25 @@ class _GameScreenState extends State<GameScreen> {
     final result = await widget.backend.getRoundResult(_currentRound);
     if (!mounted) return;
 
+    if (result.winner == null) {
+      setState(() {
+        _lastResult = result;
+        _phase = GamePhase.showingRound;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unentschieden! Runde wird wiederholt.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      _playRound();
+      return;
+    }
+
     setState(() {
+      _lastResult = result;
       _rounds.add(result);
       _phase = GamePhase.showingRound;
     });
@@ -141,7 +160,6 @@ class _GameScreenState extends State<GameScreen> {
             GameResultHeader(
               phase: _phase,
               currentRound: _currentRound,
-              roundsLength: _rounds.length,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -153,7 +171,7 @@ class _GameScreenState extends State<GameScreen> {
                       player2ImagePath: widget.player2ImagePath,
                       seriesWinner: _seriesWinner,
                       gameOver: _phase.isPostGame,
-                      lastRound: _rounds.isNotEmpty ? _rounds.last : null,
+                      lastRound: _lastResult,
                       waiting: _phase == GamePhase.waitingRound,
                     ),
                     const SizedBox(height: 16),

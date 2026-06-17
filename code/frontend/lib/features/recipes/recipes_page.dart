@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../services/gemma_recipe_parsing.dart';
 import '../../services/recipe_store.dart';
 import 'widgets/generated_cocktail_tile.dart';
 import 'widgets/whats_in_the_box_overlay.dart';
@@ -54,16 +56,7 @@ class RecipesPage extends StatelessWidget {
 
   Widget _buildContent(BuildContext context, RecipeStore store) {
     if (store.isGenerating) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: AppColors.primary),
-            SizedBox(height: 16),
-            Text('Cocktails werden generiert…', style: AppTextStyles.bodyMedium),
-          ],
-        ),
-      );
+      return _GeneratingView(modelStatus: store.modelStatus);
     }
 
     if (!store.hasPool) {
@@ -168,6 +161,46 @@ class _EmptyState extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown while a pool is being generated. When an on-device model is wired in,
+/// the first run also surfaces the model download / startup progress.
+class _GeneratingView extends StatelessWidget {
+  final ValueListenable<GemmaModelStatus>? modelStatus;
+  const _GeneratingView({required this.modelStatus});
+
+  @override
+  Widget build(BuildContext context) {
+    final status = modelStatus;
+    if (status == null) return _column('Cocktails werden generiert…');
+
+    return ValueListenableBuilder<GemmaModelStatus>(
+      valueListenable: status,
+      builder: (context, value, _) {
+        switch (value.phase) {
+          case GemmaModelPhase.downloading:
+            return _column('KI-Modell wird geladen … ${value.downloadPercent}%');
+          case GemmaModelPhase.loading:
+            return _column('KI-Modell wird gestartet…');
+          default:
+            return _column('Cocktails werden generiert…');
+        }
+      },
+    );
+  }
+
+  Widget _column(String label) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(color: AppColors.primary),
+          const SizedBox(height: 16),
+          Text(label, style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
         ],
       ),
     );

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/generated_cocktail.dart';
 import '../models/pump_setup.dart';
+import 'gemma_recipe_parsing.dart';
 import 'recipe_generator_service.dart';
 
 /// Single source of truth for the current pump assignment and the cocktails
@@ -28,7 +29,8 @@ class RecipeStore extends ChangeNotifier {
   static const String _setupKey = 'recipe_pump_setup';
   static const String _poolKey = 'recipe_pool';
 
-  final RecipeGeneratorService _generator;
+  RecipeGeneratorService _generator;
+  ValueListenable<GemmaModelStatus>? _modelStatus;
 
   PumpSetup _setup = PumpSetup.empty();
   List<GeneratedCocktail> _pool = const [];
@@ -39,6 +41,20 @@ class RecipeStore extends ChangeNotifier {
   List<GeneratedCocktail> get pool => List.unmodifiable(_pool);
   bool get isGenerating => _generating;
   bool get hasPool => _pool.isNotEmpty;
+
+  /// On-device model status, if a model-backed generator is wired in (only in
+  /// the real app via `main.dart`). Null when running on the mock generator.
+  ValueListenable<GemmaModelStatus>? get modelStatus => _modelStatus;
+
+  /// Swap the generator at app startup (e.g. an on-device LLM). The mock stays
+  /// the default everywhere else, so test mode and tests never need a model.
+  void useGenerator(
+    RecipeGeneratorService generator, {
+    ValueListenable<GemmaModelStatus>? modelStatus,
+  }) {
+    _generator = generator;
+    _modelStatus = modelStatus;
+  }
 
   /// Load persisted setup + pool. Safe to call multiple times.
   Future<void> load() async {

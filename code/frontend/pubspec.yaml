@@ -40,6 +40,10 @@ dependencies:
   google_mlkit_face_detection: ^0.13.0
   google_mlkit_image_labeling: ^0.14.0
   shared_preferences: ^2.3.2
+  # On-device LLM for recipe generation (no API key / runs locally).
+  # Pinned to 0.16.x: 1.0.0 needs Dart >=3.12 (Flutter 3.44+); this project is on
+  # Flutter 3.41 / Dart 3.11.
+  flutter_gemma: ^0.16.5
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +66,13 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # On-device LLM model for recipe generation. Drop the Gemma .task file here as
+  # `gemma.task` (see assets/models/README.md). The folder is registered so the
+  # build works even before the model is added; at runtime a missing model just
+  # falls back to the mock generator.
+  assets:
+    - assets/models/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

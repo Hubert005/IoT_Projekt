@@ -1,7 +1,10 @@
+import '../data/cocktail_catalog.dart';
 import '../models/cocktail.dart';
 import '../models/drink.dart';
+import '../models/generated_cocktail.dart';
 import 'cocktail_service.dart';
 import 'google_ml_kit_cocktail_service.dart';
+import 'recipe_store.dart';
 
 /// Container for both cocktail recommendation and mixer drink data.
 class DrinkSelectionResult {
@@ -12,8 +15,8 @@ class DrinkSelectionResult {
 }
 
 /// Interface for determining the loser's drink.
-/// Phase 2: Uses CocktailService for AI-based selection.
-/// Production: call AI endpoint with loser's photo for personalised selection.
+/// Picks a cocktail from the pool generated for the current pump setup; if no
+/// pool has been generated yet, falls back to the built-in calibration drinks.
 abstract class DrinkService {
   Future<Drink> selectDrink({
     required int loserPlayer,
@@ -30,6 +33,8 @@ abstract class DrinkService {
 
 /// Returns a drink based on cocktail AI analysis.
 class MockDrinkService implements DrinkService {
+  /// Built-in calibration drinks used as a fallback when no cocktails have
+  /// been generated from a pump setup yet.
   static const List<Drink> _drinks = [
     Drink(
       id: 'tropical_chaos',
@@ -58,17 +63,22 @@ class MockDrinkService implements DrinkService {
   ];
 
   final CocktailService _cocktailService;
+  final RecipeStore _recipeStore;
 
-  MockDrinkService({CocktailService? cocktailService})
-    : _cocktailService = cocktailService ?? GoogleMLKitCocktailService();
+  MockDrinkService({CocktailService? cocktailService, RecipeStore? recipeStore})
+      : _cocktailService = cocktailService ?? GoogleMLKitCocktailService(),
+        _recipeStore = recipeStore ?? RecipeStore.instance;
 
   @override
   Future<Drink> selectDrink({
     required int loserPlayer,
     required String loserImagePath,
   }) async {
-    await Future.delayed(const Duration(seconds: 2));
-    return _drinks[DateTime.now().second % _drinks.length];
+    final result = await selectDrinkWithCocktail(
+      loserPlayer: loserPlayer,
+      loserImagePath: loserImagePath,
+    );
+    return result.drink;
   }
 
   @override
@@ -76,24 +86,34 @@ class MockDrinkService implements DrinkService {
     required int loserPlayer,
     required String loserImagePath,
   }) async {
-    // Get cocktail recommendation from AI/ML
+    final pool = _recipeStore.pool;
+
+    if (pool.isNotEmpty) {
+      // Pick from the AI-generated pool, using the loser's selfie.
+      final byId = {for (final c in pool) c.id: c};
+      final selected = await _cocktailService.selectCocktail(
+        loserImagePath: loserImagePath,
+        candidates: pool.map((c) => c.toCocktailData()).toList(),
+      );
+      final GeneratedCocktail chosen = byId[selected.id] ?? pool.first;
+      return DrinkSelectionResult(cocktail: chosen.toCocktailData(), drink: chosen.toDrink());
+    }
+
+    // Fallback: no generated pool yet → use the built-in catalog + drinks.
     final cocktail = await _cocktailService.selectCocktail(
       loserImagePath: loserImagePath,
+      candidates: CocktailCatalog.cocktails,
     );
-
-    // Map cocktail to mixer drink
-    final drink = _mapCocktailToDrink(cocktail);
-
-    return DrinkSelectionResult(cocktail: cocktail, drink: drink);
+    return DrinkSelectionResult(cocktail: cocktail, drink: _mapCocktailToDrink(cocktail));
   }
 
-  /// Map cocktail ID to mixer drink.
+  /// Map a built-in cocktail ID to a built-in mixer drink (fallback only).
   Drink _mapCocktailToDrink(CocktailData cocktail) {
     return switch (cocktail.id) {
-      'tropical_chaos' => _drinks[0],
-      'sour_loser' => _drinks[1],
-      'blue_regret' => _drinks[2],
-      'bitter_defeat' => _drinks[3],
+      'long_island' => _drinks[0],
+      'old_fashioned' => _drinks[1],
+      'mojito' => _drinks[2],
+      'zombie' => _drinks[3],
       _ => _drinks[0],
     };
   }

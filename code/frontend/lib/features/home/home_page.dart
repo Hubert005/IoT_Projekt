@@ -9,6 +9,7 @@ import '../game/photo_capture_page.dart';
 import '../recipes/recipes_page.dart';
 import 'components/bottom_nav_item.dart';
 import 'components/home_status_row.dart';
+import 'components/mix_random_drink_button.dart';
 import 'components/next_action_card.dart';
 import 'components/start_game_button.dart';
 
@@ -102,13 +103,17 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
           child: StartGameButton(
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const PhotoCapturePage()),
             ),
           ),
+        ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: MixRandomDrinkButton(),
         ),
       ],
     );

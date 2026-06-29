@@ -49,9 +49,12 @@ class BleBackendService implements BackendService {
     final p1 = _parseGesture(int.parse(parts[2]));
     final p2 = _parseGesture(int.parse(parts[3]));
 
-    // Quittung an ESP, damit er die naechste Runde startet
-    await conn.send('runde_ok');
-
     return RoundResult(round: round, p1: p1, p2: p2);
   }
+
+  @override
+  Future<void> continueSeries() => conn.send('runde_ok');
+
+  @override
+  Future<void> endSeries() => conn.send('stop');
 }

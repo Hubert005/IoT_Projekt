@@ -82,11 +82,15 @@ class _GameScreenState extends State<GameScreen> {
     if (!mounted) return;
 
     if (_seriesWinner != null) {
+      await widget.backend.endSeries();
+      if (!mounted) return;
       setState(() => _phase = GamePhase.gameOver);
       await Future.delayed(const Duration(milliseconds: 1500));
       if (!mounted) return;
       _selectDrink();
     } else {
+      await widget.backend.continueSeries();
+      if (!mounted) return;
       setState(() => _currentRound++);
       _playRound();
     }

@@ -27,6 +27,20 @@ class BleService {
   final _sentCtrl = StreamController<String>.broadcast();
   bool _connected = false;
 
+  /// Messages arrive on a broadcast stream, which drops events fired while
+  /// nobody is listening (e.g. during the 2s "showing round" delay between
+  /// two `waitForMessage` calls). This backlog keeps unconsumed messages
+  /// around so a later `waitForMessage` still finds them instead of hanging
+  /// forever on a message that already arrived and was lost.
+  static const int _backlogLimit = 20;
+  final List<String> _backlog = [];
+
+  void _onMessage(String msg) {
+    _backlog.add(msg);
+    if (_backlog.length > _backlogLimit) _backlog.removeAt(0);
+    _msgCtrl.add(msg);
+  }
+
   Stream<String> get messageStream    => _msgCtrl.stream;
   Stream<bool>   get connectionStream => _connCtrl.stream;
 
@@ -59,7 +73,7 @@ class BleService {
   }
 
   /// Simulates a message arriving from the ESP32.
-  void inject(String message) => _msgCtrl.add(message);
+  void inject(String message) => _onMessage(message);
 
   // ── Scan ─────────────────────────────────────────────────────────────────
 
@@ -104,7 +118,7 @@ class BleService {
     await rxChar.setNotifyValue(true);
     _notifySub = rxChar.onValueReceived.listen((bytes) {
       final msg = utf8.decode(bytes).trim();
-      if (msg.isNotEmpty) _msgCtrl.add(msg);
+      if (msg.isNotEmpty) _onMessage(msg);
     });
 
     _connected = true;
@@ -145,6 +159,11 @@ class BleService {
   /// Resolves when the next incoming message starting with [prefix] arrives.
   Future<String> waitForMessage(String prefix,
       {Duration timeout = const Duration(seconds: 60)}) {
+    final backlogIndex = _backlog.indexWhere((m) => m.startsWith(prefix));
+    if (backlogIndex != -1) {
+      return Future.value(_backlog.removeAt(backlogIndex));
+    }
+
     final completer = Completer<String>();
     late StreamSubscription sub;
     final timer = Timer(timeout, () {
@@ -159,6 +178,7 @@ class BleService {
       if (msg.startsWith(prefix)) {
         timer.cancel();
         sub.cancel();
+        _backlog.remove(msg);
         if (!completer.isCompleted) completer.complete(msg);
       }
     });

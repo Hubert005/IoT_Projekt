@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:iot_drink_mixer/core/theme/app_colors.dart';
 import '../../models/cocktail.dart';
@@ -38,11 +40,14 @@ class _GameScreenState extends State<GameScreen> {
   static const int _seriesLength = 3;
 
   final List<RoundResult> _rounds = [];
+  RoundResult? _lastResult;
   GamePhase _phase = GamePhase.waitingRound;
   int _currentRound = 1;
   Drink? _drink;
   CocktailData? _selectedCocktail;
   int? _loserPlayer;
+  StreamSubscription<bool>? _connSub;
+  bool _aborted = false;
 
   int get _p1Wins => _rounds.where((r) => r.winner == 1).length;
   int get _p2Wins => _rounds.where((r) => r.winner == 2).length;
@@ -60,25 +65,78 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
+    if (!BleService.instance.isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _abort(
+            'Kein Gerät verbunden. Bitte zuerst mit dem ESP32 verbinden.',
+          ));
+      return;
+    }
+    _connSub = BleService.instance.connectionStream.listen((connected) {
+      if (!connected && !_aborted && !_phase.isPostGame) {
+        _abort('Verbindung zum ESP32 verloren.');
+      }
+    });
     _init();
   }
 
+  @override
+  void dispose() {
+    _connSub?.cancel();
+    super.dispose();
+  }
+
+  /// Surfaces a visible error and bails out of the game instead of leaving
+  /// the screen silently stuck on a BLE wait that will never resolve.
+  void _abort(String message) {
+    if (_aborted || !mounted) return;
+    _aborted = true;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    Navigator.popUntil(context, (r) => r.isFirst);
+  }
+
   Future<void> _init() async {
-    if (BleService.instance.isConnected) {
+    try {
       await BleService.instance.send('start');
       await BleService.instance.waitForMessage('start_ok');
+    } catch (_) {
+      _abort('Keine Antwort vom ESP32 erhalten.');
+      return;
     }
     if (mounted) _playRound();
   }
 
   Future<void> _playRound() async {
-    if (!mounted) return;
+    if (!mounted || _aborted) return;
     setState(() => _phase = GamePhase.waitingRound);
 
-    final result = await widget.backend.getRoundResult(_currentRound);
-    if (!mounted) return;
+    RoundResult result;
+    try {
+      result = await widget.backend.getRoundResult(_currentRound);
+    } catch (_) {
+      _abort('Keine Antwort vom ESP32 erhalten.');
+      return;
+    }
+    if (!mounted || _aborted) return;
+
+    if (result.winner == null) {
+      setState(() {
+        _lastResult = result;
+        _phase = GamePhase.showingRound;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unentschieden! Runde wird wiederholt.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      _playRound();
+      return;
+    }
 
     setState(() {
+      _lastResult = result;
       _rounds.add(result);
       _phase = GamePhase.showingRound;
     });
@@ -117,7 +175,12 @@ class _GameScreenState extends State<GameScreen> {
       _phase = GamePhase.drinkSending;
     });
 
-    await widget.mixerService.orderDrink(selection.drink);
+    try {
+      await widget.mixerService.orderDrink(selection.drink);
+    } catch (_) {
+      _abort('Keine Antwort vom ESP32 erhalten.');
+      return;
+    }
     if (!mounted) return;
 
     setState(() => _phase = GamePhase.drinkReady);
@@ -141,7 +204,6 @@ class _GameScreenState extends State<GameScreen> {
             GameResultHeader(
               phase: _phase,
               currentRound: _currentRound,
-              roundsLength: _rounds.length,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -153,7 +215,7 @@ class _GameScreenState extends State<GameScreen> {
                       player2ImagePath: widget.player2ImagePath,
                       seriesWinner: _seriesWinner,
                       gameOver: _phase.isPostGame,
-                      lastRound: _rounds.isNotEmpty ? _rounds.last : null,
+                      lastRound: _lastResult,
                       waiting: _phase == GamePhase.waitingRound,
                     ),
                     const SizedBox(height: 16),

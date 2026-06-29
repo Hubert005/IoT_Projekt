@@ -7,20 +7,18 @@ import '../extension/game_phase.dart';
 class GameResultHeader extends StatelessWidget {
   final GamePhase phase;
   final int currentRound;
-  final int roundsLength;
 
   const GameResultHeader({
     super.key,
     required this.phase,
     required this.currentRound,
-    required this.roundsLength,
   });
 
   @override
   Widget build(BuildContext context) {
     final (text, color, loading) = switch (phase) {
       GamePhase.waitingRound => ('WARTE AUF RUNDE $currentRound …', AppColors.warning, true),
-      GamePhase.showingRound => ('ERGEBNIS RUNDE $roundsLength', AppColors.info, false),
+      GamePhase.showingRound => ('ERGEBNIS RUNDE $currentRound', AppColors.info, false),
       GamePhase.gameOver => ('SPIELERGEBNIS', AppColors.primary, false),
       GamePhase.drinkSelecting => ('DRINK WIRD ERMITTELT …', AppColors.warning, true),
       GamePhase.drinkSending => ('WIRD AN MIXER GESCHICKT …', AppColors.warning, true),

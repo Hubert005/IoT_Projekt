@@ -1,0 +1,30 @@
+# ---- PlatformIO (ESP32-C3 / Arduino Nano) ----
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# ---- Flutter / Dart ----
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.pub-cache/
+.pub/
+*.g.dart.lock
+
+# ---- IDE / editor ----
+.idea/
+*.iml
+*.code-workspace
+.vscode/.browse.c_cpp.db*
+.vscode/ipch/
+
+# ---- OS noise ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Misc build / log output ----
+*.log
+*.tmp

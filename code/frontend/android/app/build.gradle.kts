@@ -24,10 +24,16 @@ android {
         applicationId = "com.example.iot_drink_mixer"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // flutter_gemma (on-device LLM) requires minSdk 26.
+        minSdk = maxOf(26, flutter.minSdkVersion)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // The Gemma runtime ships arm64 native libs; restrict ABIs to keep the
+        // build slim and avoid shipping unsupported architectures.
+        ndk {
+            abiFilters.add("arm64-v8a")
+        }
     }
 
     buildTypes {

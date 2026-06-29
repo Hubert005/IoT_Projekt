@@ -4,6 +4,10 @@
 *.pyc
 *.swp
 .DS_Store
+
+# On-device LLM model (large, fetched per developer — see assets/models/README.md)
+assets/models/*.task
+assets/models/*.litertlm
 .atom/
 .build/
 .buildlog/

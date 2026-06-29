@@ -135,6 +135,23 @@ class _GameScreenState extends State<GameScreen> {
       return;
     }
 
+    if (result.winner == null) {
+      setState(() {
+        _lastResult = result;
+        _phase = GamePhase.showingRound;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unentschieden! Runde wird wiederholt.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      _playRound();
+      return;
+    }
+
     setState(() {
       _lastResult = result;
       _rounds.add(result);

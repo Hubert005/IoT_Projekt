@@ -76,6 +76,8 @@ void setup() {
   pinMode(B9, INPUT_PULLUP);
 
   Serial.begin(115200);
+  Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1);
+  Serial1.setTimeout(20000); // kuerzer als das App-Timeout (30 s), damit mix_err die App erreicht
 
   Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1);
 }
@@ -88,14 +90,25 @@ void loop(){
   // start game
   if(msg == "start"){
     sendBLE("start_ok");
-    for(int i = 0; i < 3; i++){
-      sendBLE(listenBTNround(i));
-      while(listenBLE() != "runde_ok"){}
+    int round = 0;
+    bool playing = true;
+    while (playing) {
+      sendBLE(listenBTNround(round));
+      // Auf "runde_ok" (naechste Runde) oder "stop" (Serie vorbei) warten.
+      // Bei Timeout/Disconnect beenden wir die Serie, damit wir nicht haengen.
+      while (true) {
+        String ack = listenBLEBlocking(30000);
+        if (ack == "runde_ok") { round++; break; }
+        if (ack == "stop") { playing = false; break; }
+        if (ack.length() == 0) { playing = false; break; }
+        // unbekannte Nachricht -> ignorieren, weiter warten
+      }
     }
   }
 
-  // start mixing
-  if(msg.startsWith("mix_")){
+  // start mixing - "mix_a_b_c_d"
+  else if (msg.startsWith("mix_")) {
+    while (Serial1.available()) Serial1.read(); // stale Frames vor dem Mix verwerfen
     sendCMD(msg);
     if(listenCMD() == "mix_ok"){
       sendBLE("mix_ok");

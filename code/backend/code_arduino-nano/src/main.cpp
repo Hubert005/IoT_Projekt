@@ -52,13 +52,17 @@ void loop() {
     int durations[4];
     for(int i = 0; i < 4; i++){
       int underscoreIndex = msg.indexOf('_');
-      if(underscoreIndex == -1){
+      // last field has no trailing '_', take the remainder of the string
+      if(underscoreIndex == -1 && i < 3){
+        espSerial.println("mix_err"); // NAK so the ESP doesn't wait for a timeout
         Serial.println("Invalid message format");
         return;
       }
-      String durationStr = msg.substring(0, underscoreIndex);
+      String durationStr = (underscoreIndex == -1) ? msg : msg.substring(0, underscoreIndex);
       durations[i] = durationStr.toInt();
-      msg.remove(0, underscoreIndex + 1);
+      if(underscoreIndex != -1){
+        msg.remove(0, underscoreIndex + 1);
+      }
     }
     // Pump the motors
     for(int i = 0; i < 4; i++){

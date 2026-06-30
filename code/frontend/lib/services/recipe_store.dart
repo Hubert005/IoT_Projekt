@@ -8,20 +8,12 @@ import '../models/pump_setup.dart';
 import 'gemma_recipe_parsing.dart';
 import 'recipe_generator_service.dart';
 
-/// Single source of truth for the current pump assignment and the cocktails
-/// generated from it. Consumed by the Recipe tab (UI) and the game's
-/// [DrinkService] (loser selection).
-///
-/// Persisted via shared_preferences so the setup and pool survive an app
-/// restart. The pool is invalidated only when the pump assignment changes.
 class RecipeStore extends ChangeNotifier {
   RecipeStore._({RecipeGeneratorService? generator})
       : _generator = generator ?? const MockRecipeGeneratorService();
 
   static final RecipeStore instance = RecipeStore._();
 
-  /// Creates an isolated instance (not the singleton) for tests, so a fake or
-  /// fast generator can be injected.
   @visibleForTesting
   RecipeStore.forTesting({RecipeGeneratorService? generator})
       : _generator = generator ?? const MockRecipeGeneratorService(delay: Duration.zero);
@@ -42,12 +34,8 @@ class RecipeStore extends ChangeNotifier {
   bool get isGenerating => _generating;
   bool get hasPool => _pool.isNotEmpty;
 
-  /// On-device model status, if a model-backed generator is wired in (only in
-  /// the real app via `main.dart`). Null when running on the mock generator.
   ValueListenable<GemmaModelStatus>? get modelStatus => _modelStatus;
 
-  /// Swap the generator at app startup (e.g. an on-device LLM). The mock stays
-  /// the default everywhere else, so test mode and tests never need a model.
   void useGenerator(
     RecipeGeneratorService generator, {
     ValueListenable<GemmaModelStatus>? modelStatus,
@@ -56,7 +44,6 @@ class RecipeStore extends ChangeNotifier {
     _modelStatus = modelStatus;
   }
 
-  /// Load persisted setup + pool. Safe to call multiple times.
   Future<void> load() async {
     if (_loaded) return;
     _loaded = true;
@@ -79,8 +66,6 @@ class RecipeStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Apply a new pump assignment. If it actually changed (or no pool exists
-  /// yet), the old pool is discarded and a fresh one is generated.
   Future<void> updateSetupAndRegenerate(PumpSetup newSetup) async {
     final unchanged = newSetup.sameAs(_setup) && _pool.isNotEmpty;
     _setup = newSetup;
@@ -92,7 +77,6 @@ class RecipeStore extends ChangeNotifier {
     await _regenerate();
   }
 
-  /// Re-run generation for the current setup (e.g. a "regenerate" button).
   Future<void> regenerate() => _regenerate();
 
   Future<void> _regenerate() async {

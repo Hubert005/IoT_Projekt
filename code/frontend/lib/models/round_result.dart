@@ -4,7 +4,7 @@ class RoundResult {
   final int round;
   final Gesture p1;
   final Gesture p2;
-  final int? winner; // 1, 2, or null = draw
+  final int? winner;
 
   RoundResult({required this.round, required this.p1, required this.p2})
       : winner = p1.versus(p2);

@@ -3,8 +3,6 @@ import 'dart:math';
 import '../models/cocktail.dart';
 import 'cocktail_service.dart';
 
-/// Mock implementation of CocktailService for development and testing.
-/// Picks a random cocktail from the provided candidate pool.
 class MockCocktailService implements CocktailService {
   @override
   Future<CocktailData> selectCocktail({

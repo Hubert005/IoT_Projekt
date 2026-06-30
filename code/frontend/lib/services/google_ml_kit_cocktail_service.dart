@@ -6,10 +6,6 @@ import '../models/cocktail.dart';
 import 'cocktail_service.dart';
 import 'image_analyzer_service.dart';
 
-/// Real ML Kit implementation of CocktailService.
-/// Analyzes the loser's photo and matches it to one of the given [candidates]
-/// using generic mood-tag scoring, so it works with any dynamically generated
-/// cocktail pool (not a fixed catalog).
 class GoogleMLKitCocktailService implements CocktailService {
   final ImageAnalyzerService _analyzer;
 
@@ -50,8 +46,6 @@ class GoogleMLKitCocktailService implements CocktailService {
     }
   }
 
-  /// Sum the mood weights for a candidate's tags. A tiny base weight per tag
-  /// keeps the result stable when none of the tags are emphasised.
   double _scoreByTags(List<String> tags, Map<String, double> weights) {
     double score = 0;
     for (final tag in tags) {
@@ -60,7 +54,6 @@ class GoogleMLKitCocktailService implements CocktailService {
     return score;
   }
 
-  /// Translate the analyzed image into per-tag weights.
   Map<String, double> _moodWeights(ImageProfile profile) {
     final w = <String, double>{};
     void add(String tag, double v) => w[tag] = (w[tag] ?? 0) + v;
@@ -84,7 +77,6 @@ class GoogleMLKitCocktailService implements CocktailService {
         break;
     }
 
-    // Eye openness → energy.
     final avgEyeOpen =
         ((profile.estimatedLeftEyeOpen ?? 0.5) + (profile.estimatedRightEyeOpen ?? 0.5)) / 2;
     if (avgEyeOpen > 0.7) {
@@ -93,14 +85,12 @@ class GoogleMLKitCocktailService implements CocktailService {
       }
     }
 
-    // Head turned/tilted → confidence / boldness.
     if ((profile.headEulerAngleY ?? 0).abs() > 15 || (profile.headEulerAngleZ ?? 0).abs() > 10) {
       for (final t in ['confident', 'bold', 'adventurous', 'intense']) {
         add(t, 0.25);
       }
     }
 
-    // Image labels → matching tags.
     const labelTagMap = {
       'tropical': ['tropical', 'colorful', 'adventurous'],
       'green': ['fresh', 'light'],

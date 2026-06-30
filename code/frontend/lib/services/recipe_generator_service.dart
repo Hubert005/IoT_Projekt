@@ -3,24 +3,14 @@ import 'dart:math';
 import '../models/generated_cocktail.dart';
 import '../models/pump_setup.dart';
 
-/// Generates a small set of cocktails that can be mixed from the four drinks
-/// currently assigned to the pumps.
-///
-/// Production: swap in an LLM-backed implementation (e.g. GeminiRecipe
-/// GeneratorService) — the rest of the app only depends on this interface.
 abstract class RecipeGeneratorService {
-  /// Returns 3..6 cocktails using only the ingredients in [setup].
   Future<List<GeneratedCocktail>> generate(PumpSetup setup);
 }
 
-/// Bounds for generated pump amounts (same unit as the calibration drinks).
 const int _maxPerPump = 80;
 const int _minPerPump = 20;
 const int _maxTotal = 250;
 
-/// Deterministic mock generator: same pump setup always yields the same
-/// cocktails. Builds plausible drinks from the user's four ingredient names so
-/// the whole flow works without any AI backend or hardware.
 class MockRecipeGeneratorService implements RecipeGeneratorService {
   final Duration delay;
 
@@ -78,7 +68,6 @@ class MockRecipeGeneratorService implements RecipeGeneratorService {
     return cocktails;
   }
 
-  /// Assign amounts to 2..4 pumps, each within bounds, total <= [_maxTotal].
   List<int> _randomAmounts(Random rng) {
     final amounts = List<int>.filled(4, 0);
     final pumps = [0, 1, 2, 3]..shuffle(rng);
@@ -92,7 +81,6 @@ class MockRecipeGeneratorService implements RecipeGeneratorService {
     if (total > _maxTotal) {
       final scale = _maxTotal / total;
       for (var i = 0; i < amounts.length; i++) {
-        // floor keeps the running total at or below _maxTotal.
         if (amounts[i] > 0) amounts[i] = (amounts[i] * scale).floor();
       }
     }

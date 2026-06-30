@@ -4,29 +4,16 @@ import '../models/generated_cocktail.dart';
 import '../models/mood_tags.dart';
 import '../models/pump_setup.dart';
 
-/// Pure (model-free) helpers for the on-device LLM recipe generator:
-/// prompt building, response parsing and a sanitizer that forces the model
-/// output back into the same contract the [MockRecipeGeneratorService] tests
-/// enforce. Kept free of any `flutter_gemma` import so it can be unit-tested
-/// without downloading a model.
-
-/// Bounds for generated pump amounts — must match the ones in
-/// `recipe_generator_service.dart`.
 const int kMaxPerPump = 80;
 const int kMinPerPump = 20;
 const int kMaxTotal = 250;
-
-/// At most this many cocktails are kept; extra ones from the model are dropped.
 const int kMaxCocktails = 6;
-
-/// System instruction handed to the chat session.
 const String kRecipeSystemInstruction =
     'Du bist ein kreativer Barkeeper für einen automatischen Cocktail-Mixer mit '
     'genau vier Pumpen. Du darfst ausschließlich die vier angegebenen Zutaten '
     'verwenden. Antworte IMMER nur mit gültigem JSON, ohne Erklärtext, ohne '
     'Markdown-Codeblöcke.';
 
-/// Builds the user prompt for a given pump [setup].
 String buildRecipePrompt(PumpSetup setup) {
   final pumps = <String>[];
   for (var i = 0; i < setup.drinks.length; i++) {
@@ -52,11 +39,6 @@ Beispiel:
 ''';
 }
 
-/// Parses raw model output into sanitized cocktails. Throws [FormatException]
-/// when no JSON structure can be found, so the caller can fall back. The
-/// returned list always satisfies the per-cocktail bounds and is capped at
-/// [kMaxCocktails]; it may contain fewer than 3 entries (the caller decides
-/// whether to fall back in that case).
 List<GeneratedCocktail> parseGemmaCocktails(String rawText, PumpSetup setup) {
   final decoded = jsonDecode(_extractJson(rawText));
   final List<dynamic> items;
@@ -70,7 +52,6 @@ List<GeneratedCocktail> parseGemmaCocktails(String rawText, PumpSetup setup) {
   return sanitizeCocktails(items, setup);
 }
 
-/// Forces a list of decoded JSON cocktail maps into valid [GeneratedCocktail]s.
 List<GeneratedCocktail> sanitizeCocktails(List<dynamic> items, PumpSetup setup) {
   final names = setup.drinks.map((d) => d.trim()).toList();
   final out = <GeneratedCocktail>[];
@@ -92,8 +73,6 @@ List<GeneratedCocktail> sanitizeCocktails(List<dynamic> items, PumpSetup setup) 
   return out;
 }
 
-/// Extracts the first JSON array (or object) from arbitrary model text, which
-/// may include prose or ```json fences.
 String _extractJson(String text) {
   final arrStart = text.indexOf('[');
   final arrEnd = text.lastIndexOf(']');
@@ -108,9 +87,6 @@ String _extractJson(String text) {
   throw const FormatException('no JSON structure found in model output');
 }
 
-/// Clamp to [0, kMaxPerPump], ensure at least two pumps are used, then scale
-/// down to keep the total <= kMaxTotal. Mirrors
-/// `MockRecipeGeneratorService._randomAmounts`.
 List<int> _sanitizeAmounts(dynamic raw) {
   final amounts = List<int>.filled(4, 0);
   if (raw is List) {
@@ -121,7 +97,6 @@ List<int> _sanitizeAmounts(dynamic raw) {
     }
   }
 
-  // Ensure at least two pumps contribute.
   var used = amounts.where((a) => a > 0).length;
   for (var i = 0; i < 4 && used < 2; i++) {
     if (amounts[i] == 0) {
@@ -130,9 +105,6 @@ List<int> _sanitizeAmounts(dynamic raw) {
     }
   }
 
-  // Scale down proportionally if the total is too large. Filled values are >=
-  // kMinPerPump and the scale factor is bounded below (>=250/320), so used
-  // pumps stay > 0 after the floor.
   final total = amounts.fold(0, (s, v) => s + v);
   if (total > kMaxTotal) {
     final scale = kMaxTotal / total;
@@ -197,14 +169,11 @@ int _seedFor(List<String> names) {
   return seed;
 }
 
-/// Lifecycle of the on-device model, surfaced to the UI for a download/progress
-/// indicator. Defined here (model-free) so widgets can import it without
-/// pulling in `flutter_gemma`.
 enum GemmaModelPhase { idle, downloading, loading, ready, unavailable }
 
 class GemmaModelStatus {
   final GemmaModelPhase phase;
-  final int downloadPercent; // 0..100, meaningful while [phase] is downloading
+  final int downloadPercent;
   final String? error;
 
   const GemmaModelStatus._(this.phase, this.downloadPercent, this.error);

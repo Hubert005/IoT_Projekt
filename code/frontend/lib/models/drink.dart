@@ -2,7 +2,7 @@ class Drink {
   final String id;
   final String name;
   final String ingredients;
-  final List<int> pumpAmounts; // ml per pump: [pump0, pump1, pump2, pump3]
+  final List<int> pumpAmounts;
 
   const Drink({
     required this.id,

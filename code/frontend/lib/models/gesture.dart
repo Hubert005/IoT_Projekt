@@ -13,7 +13,6 @@ extension GestureExt on Gesture {
     Gesture.scissors => 'Scissors',
   };
 
-  /// Returns 1 if this wins, 2 if other wins, null for draw.
   int? versus(Gesture other) {
     if (this == other) return null;
     if ((this == Gesture.rock && other == Gesture.scissors) ||

@@ -604,6 +604,63 @@ typisch sind.
    kurz halten, damit das Spielerlebnis flüssig bleibt.],
 )
 
+#pagebreak()
+
+// ============================================================
+//  8 · KOSTENAUFSTELLUNG
+// ============================================================
+= Kostenaufstellung
+
+Die Hardware für den Automaten wurde im Team beschafft. Die folgende Aufstellung
+listet die Materialkosten nach Besteller auf. Insgesamt belaufen sich die Kosten
+auf *124,44 €*, was bei vier Personen rund *31,11 € pro Person* entspricht.
+
+#let kostenblock(name, posten, gesamt) = block(breakable: false, width: 100%)[
+  #text(weight: "bold", fill: accent, size: 10.5pt)[#name]
+  #v(0.3em)
+  #table(
+    columns: (1fr, auto),
+    inset: (x: 5pt, y: 4.5pt),
+    align: (left + horizon, right + horizon),
+    stroke: 0.5pt + rule,
+    table.header([Posten], [Preis]),
+    ..posten.map(((p, pr)) => (text(size: 9.5pt)[#p], text(size: 9.5pt)[#pr])).flatten(),
+    table.cell(fill: accent.lighten(92%))[*Gesamt*],
+    table.cell(fill: accent.lighten(92%), align: right)[*#gesamt*],
+  )
+]
+
+#grid(
+  columns: (1fr, 1fr, 1fr),
+  column-gutter: 10pt,
+  kostenblock("Elias", (
+    ("TOF-Sensoren", "11,09 €"),
+    ("FQP30N06L MOSFET", "14,77 €"),
+    ("Tactile Push Button", "8,95 €"),
+    ("Getränkepumpen", "42,18 €"),
+    ("3D-Druck", "0,50 €"),
+  ), "77,49 €"),
+  kostenblock("Haris", (
+    ("Klettverschluss", "14,95 €"),
+    ("Div. Kleinteile", "10,00 €"),
+  ), "24,95 €"),
+  kostenblock("Felix", (
+    ("Holz", "15,00 €"),
+    ("Winkel", "5,00 €"),
+    ("Div. Kleinteile", "2,00 €"),
+  ), "22,00 €"),
+)
+
+#v(0.6em)
+
+#note[
+  *Gesamtkosten:* 77,49 € + 24,95 € + 22,00 € = *124,44 €* · bei 4 Personen
+  ≈ *31,11 € pro Person.*
+]
+
+// ============================================================
+//  9 · FAZIT
+// ============================================================
 = Fazit und Ausblick
 
 Entstanden ist ein funktionierender, vernetzter Getränkeautomat, der
@@ -612,26 +669,13 @@ Hardware-Spiel, Mobile-App und On-Device-KI über ein schlankes IoT-Protokoll
 geforderten Anforderungen sind nicht bloß angehängt, sondern erfüllen im
 Gesamtsystem eine echte Funktion.
 
-Rückblickend war der Weg dorthin deutlich aufwändiger, als es die fertige
-Beschreibung vermuten lässt. Vieles, das auf dem Papier einfach klingt, hat sich
-erst beim tatsächlichen Bauen und Implementieren als kniffeliges Detail
-herausgestellt.
-
-Die Kommunikation zwischen den Komponenten hat uns mehr Zeit gekostet als
-erwartet. Dass zwei Geräte „nur Text austauschen“, klingt simpel, in der Praxis
-mussten wir aber Timeouts, verlorene oder doppelte Nachrichten und die richtige
-Reihenfolge der Quittungen in den Griff bekommen, damit die App nicht hängen
-bleibt. Ähnliches galt für die Dosierung: Die Umrechnung von Millilitern in
-Pump-Laufzeiten sah auf dem Papier trivial aus, in Wirklichkeit musste jede Pumpe
-einzeln kalibriert werden, weil sie unterschiedlich fördern, und ohne die
-Reinigungsfunktion vermischen sich nacheinander ausgegebene Getränke. Schließlich
-brauchte auch die KI-Integration mehrere Anläufe, bis die Antworten verlässlich
-strukturiert vorlagen und schnell genug kamen, um das Spiel flüssig zu halten.
-
-Insgesamt war gerade dieses Lösen vieler kleiner, vorab kaum sichtbarer Probleme
-der lehrreichste Teil des Projekts. Wir haben dabei viel über das Zusammenspiel
-von Hardware, Software und App in einem realen IoT-System gelernt, das eben mehr
-ist als die Summe seiner einzeln getesteten Teile.
+Am lehrreichsten war das Lösen vieler kleiner, vorab kaum sichtbarer Probleme.
+Die Kommunikation zwischen den Komponenten verlangte sauberes Handling von
+Timeouts und Quittungen, die Dosierung eine einzelne Kalibrierung jeder Pumpe,
+und die KI-Integration mehrere Anläufe, bis die Antworten verlässlich
+strukturiert und schnell genug vorlagen. Dabei haben wir viel über das
+Zusammenspiel von Hardware, Software und App in einem realen IoT-System gelernt,
+das mehr ist als die Summe seiner einzeln getesteten Teile.
 
 Für die Zukunft sind außerdem mehrere Erweiterungen denkbar.
 

@@ -8,7 +8,7 @@ The Nano has exactly one wire interface to another microcontroller: `SoftwareSer
 
 | Message | Format | Action |
 |---|---|---|
-| `mix_<a>_<b>_<c>_<d>` | four unsigned integer literals separated by `_`, terminated by `\n` | Run pumps M0, M1, M2, M3 sequentially for `a`, `b`, `c`, `d` milliseconds respectively, then ack and buzz. See [runtime.md](runtime.md) for the parser walk-through. |
+| `mix_<a>_<b>_<c>_<d>` | four unsigned integer literals separated by `_`, terminated by `\n` | Run pumps M0, M1, M2, M3 sequentially for `a`, `b`, `c`, `d` milliseconds respectively, then ack (`mix_ok`) and buzz. See [runtime.md](runtime.md) for the parser walk-through. |
 
 Field semantics:
 
@@ -22,24 +22,25 @@ Field semantics:
 Behavioural notes:
 
 - Any message that does **not** start with `mix_` is silently dropped (it is still echoed to USB `Serial` as `"Nano got: …"`).
-- A `mix_*` message with fewer than four `_`-separated tokens prints `"Invalid message format"` on USB and returns without pumping or acking. **No NAK is sent back to the ESP** — the upstream side will time out at the BLE layer or hang on `listenCMD()`.
+- A `mix_*` message that is missing a `_` separator before the fourth field sends `mix_err` back on `espSerial`, prints `"Invalid message format"` on USB, and returns without pumping or acking. The fourth field itself needs no trailing `_` — the parser takes the remainder of the string.
 - Durations are not bounded. A pathologically large `a` will block the loop for that many ms.
 
 ## Nano → ESP32-C3 (`espSerial` TX, pin 9)
 
 | Message | When |
 |---|---|
-| `mix_ok\n` | Emitted at `main.cpp:69`, immediately after all four pumps complete, **before** the buzzer pattern. |
+| `mix_ok\n` | Emitted at `main.cpp:73`, immediately after all four pumps complete, **before** the buzzer pattern. |
+| `mix_err\n` | Emitted at `main.cpp:57` when the `mix_*` payload is malformed (a NAK, so the ESP need not wait out a timeout). |
 
-`mix_ok` is the only message the Nano ever sends on `espSerial`. No status pings, no error frames.
+These are the only two messages the Nano ever sends on `espSerial`. No status pings.
 
 ## Other (USB `Serial`, 115200 baud — dev only)
 
 | Direction | Message | Purpose |
 |---|---|---|
 | Nano → host | `Serial Started` | One-shot at boot (`main.cpp:35`). |
-| Nano → host | `Nano got: <msg>` | Every line received on `espSerial` (lines 44–45). |
-| Nano → host | `Invalid message format` | Malformed `mix_*` (line 56). |
+| Nano → host | `Nano got: <msg>` | Every non-empty line received on `espSerial` (lines 44–45). |
+| Nano → host | `Invalid message format` | Malformed `mix_*` (line 58). |
 
 These are debugging aids, not contracts. Nothing parses them programmatically.
 
@@ -49,6 +50,6 @@ These are debugging aids, not contracts. Nothing parses them programmatically.
 |---|---|---|
 | `_` | field separator | literal |
 | `\n` | frame terminator | literal |
-| integer literal | decimal ASCII, no sign, no padding | 0…~30_000 ms in current recipes |
+| integer literal | decimal ASCII, no sign, no padding | 0…~80 ms per pump in current recipes (generated pool caps a pump at 80 and a drink's total at 250) |
 
-If a recipe needs more than four pumps or different units, this protocol must change — and so must the ESP relay (`main.cpp:99` in the ESP32 firmware, which forwards verbatim) and the Flutter `BleMixerService`. See [`../cross-dependencies/protocol.md`](../cross-dependencies/protocol.md) for the joint change checklist.
+If a recipe needs more than four pumps or different units, this protocol must change — and so must the ESP relay (`main.cpp:112` in the ESP32 firmware, which forwards verbatim) and the Flutter `BleMixerService`. See [`../cross-dependencies/protocol.md`](../cross-dependencies/protocol.md) for the joint change checklist.

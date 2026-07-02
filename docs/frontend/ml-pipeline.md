@@ -3,8 +3,10 @@
 Two services and one data class, all under [`code/frontend/lib/services/`](../../code/frontend/lib/services/):
 
 1. [`image_analyzer_service.dart`](../../code/frontend/lib/services/image_analyzer_service.dart) — wraps Google ML Kit's face detector and image labeler. Produces an `ImageProfile`.
-2. [`google_ml_kit_cocktail_service.dart`](../../code/frontend/lib/services/google_ml_kit_cocktail_service.dart) — applies four hand-tuned heuristics to score the four catalog cocktails, picks the highest.
-3. [`drink_service.dart`](../../code/frontend/lib/services/drink_service.dart) `MockDrinkService._mapCocktailToDrink` — translates the cocktail id to a physical `Drink` (`pumpAmounts`).
+2. [`google_ml_kit_cocktail_service.dart`](../../code/frontend/lib/services/google_ml_kit_cocktail_service.dart) — turns the profile into per-tag **mood weights**, then scores each candidate cocktail by its tags and picks the highest.
+3. [`drink_service.dart`](../../code/frontend/lib/services/drink_service.dart) `MockDrinkService` — supplies the candidate pool (generated cocktails, or the fallback catalog) and turns the chosen cocktail into a physical `Drink`.
+
+Key change from the earlier design: the matcher no longer scores four fixed cocktails with four bespoke `_score*` methods. It scores **whatever pool it is handed** — normally the AI-generated cocktails from the current pump setup — using a single generic tag-weight scorer, so it works with any cocktail set.
 
 End-to-end:
 
@@ -14,11 +16,11 @@ loser image path
    ▼   ImageAnalyzerService.analyzeImage
 ImageProfile {face?, smile, eyes, head Y/Z, top-10 labels}
    │
-   ▼   GoogleMLKitCocktailService.selectCocktail
-{long_island | old_fashioned | mojito | zombie}.score → arg-max
+   ▼   GoogleMLKitCocktailService.selectCocktail(candidates: pool)
+_moodWeights(profile)  →  _scoreByTags(candidate.pairingTags)  →  arg-max
    │
-   ▼   MockDrinkService._mapCocktailToDrink
-Drink {id, pumpAmounts: [a,b,c,d]}
+   ▼   MockDrinkService: chosen GeneratedCocktail.toDrink()  (or fallback catalog → _mapCocktailToDrink)
+Drink {pumpAmounts: [a,b,c,d]}
    │
    ▼   BleMixerService.orderDrink
 "mix_a_b_c_d"  on BLE
@@ -51,91 +53,59 @@ Derived properties:
 ```dart
 await analyzer.initialize();                     // idempotent
 final profile = await analyzer.analyzeImage(path);
-// ...
-await analyzer.dispose();                        // closes both detectors
+await analyzer.dispose();                         // closes both detectors
 ```
 
-`FaceDetector` is configured with `performanceMode: accurate`, landmarks on, classification on. `ImageLabeler` uses default options. `analyzeImage`:
+`FaceDetector`: `performanceMode: accurate`, landmarks on, classification on. `ImageLabeler`: default options. `analyzeImage`:
 
-1. If no face: returns `ImageProfile(faceDetected: false, labels: <top-5 labels>)`.
-2. Otherwise uses the first face (`faces.first`) and the top-10 labels.
-3. On any exception, returns `ImageProfile(faceDetected: false)` and logs via `debugPrint`.
+1. No face → `ImageProfile(faceDetected: false, labels: <top-5 labels>)`.
+2. Otherwise first face (`faces.first`) + top-10 labels.
+3. On any exception → `ImageProfile(faceDetected: false)`, logged via `debugPrint`.
 
-## `GoogleMLKitCocktailService` scoring heuristics
+## `GoogleMLKitCocktailService` — mood-weight matcher
 
-The service calls `analyzer.initialize()` then `analyzer.analyzeImage(loserImagePath)`. If `!profile.faceDetected`, it falls back to `CocktailCatalog.getRandom()`. Otherwise it scores all four cocktails and returns the highest. Errors caught at the top of the method route to a random fallback.
+`selectCocktail({loserImagePath, candidates})`:
 
-Score components per cocktail (values from the source, summed; no normalisation):
+1. `assert(candidates.isNotEmpty)`. If `candidates.length == 1`, return it immediately (no analysis).
+2. `analyzer.initialize()` + `analyzeImage(loserImagePath)`.
+3. If `!faceDetected` → random candidate.
+4. Otherwise build `_moodWeights(profile)`, score every candidate with `_scoreByTags`, return the arg-max.
+5. Any exception → random candidate (logged).
 
-### `long_island` — confident, energetic, complex
+### `_moodWeights(profile)` → `Map<String, double>`
 
-| Trigger | Adds |
-|---|---|
-| `emotion == 'neutral'` or `'sad'` | +0.3 |
-| \|`headEulerAngleY`\| > 15° | +0.2 |
-| Any label contains one of `dark`, `serious`, `intense`, `bold` | +0.3 |
-| `avgEyeOpen` (left/right mean, default 0.5) | + `avgEyeOpen * 0.2` |
+Accumulates weights per mood tag from four signal groups (all tags are from [`kMoodTags`](../../code/frontend/lib/models/mood_tags.dart)):
 
-Max realistic: ~0.8.
+| Signal | Condition | Tags boosted (+weight) |
+|---|---|---|
+| Emotion | `emotion == 'happy'` | happy, fresh, light, colorful, playful, young (+0.5 each) |
+| Emotion | `emotion == 'neutral'` | sophisticated, calm, warm, classic, traditional (+0.4) |
+| Emotion | `emotion == 'sad'` | dark, serious, mysterious, intense, complex (+0.4) |
+| Eye openness | `avgEyeOpen > 0.7` (default 0.5) | energetic, bold, adventurous (+0.3) |
+| Head pose | `|headEulerAngleY| > 15` or `|headEulerAngleZ| > 10` | confident, bold, adventurous, intense (+0.25) |
+| Image labels | label contains a key (e.g. `tropical`, `green`, `blue`, `orange`, `red`, `yellow`, `dark`, `wood`, `bright`) | that key's mapped tags (+0.3) |
 
-### `old_fashioned` — sophisticated, calm, warm
-
-| Trigger | Adds |
-|---|---|
-| `emotion == 'neutral'` | +0.4 |
-| Any label contains one of `warm`, `brown`, `vintage`, `classic`, `wood` | +0.3 |
-| \|`headEulerAngleZ`\| < 10° | +0.2 |
-| `0.2 < estimatedSmile < 0.5` | +0.2 |
-
-Max realistic: ~1.1.
-
-### `mojito` — happy, fresh, light
-
-| Trigger | Adds |
-|---|---|
-| `emotion == 'happy'` | +0.5 |
-| Any label contains one of `light`, `green`, `blue`, `fresh`, `colorful`, `bright`, `young` | +0.3 |
-| `avgEyeOpen` > 0.7 | +0.2 |
-| \|`headEulerAngleY`\| < 20° | +0.1 |
-
-Max realistic: ~1.1.
-
-### `zombie` — adventurous, bold, tropical
-
-| Trigger | Adds |
-|---|---|
-| `emotion == 'happy'` | +0.25 |
-| else if `emotion == 'sad'` or `'neutral'` | +0.2 |
-| Any label contains one of `tropical`, `exotic`, `colorful`, `orange`, `red`, `yellow` | +0.35 |
-| \|`headEulerAngleY`\| > 10° | +0.15 |
-| \|`headEulerAngleZ`\| > 8° | +0.15 |
-
-Max realistic: ~0.9.
-
-These weights are **hand-picked, not learned**. If the catalog or theme changes, retune by editing the four `_score*` methods directly — there is no config file.
-
-The `_labelsContain` helper lowercases everything and uses `String.contains`, so a label like `"Tropical Rainforest"` matches `"tropical"`.
-
-## Cocktail → drink mapping
-
-[`drink_service.dart`](../../code/frontend/lib/services/drink_service.dart) `_mapCocktailToDrink`:
+### `_scoreByTags(tags, weights)`
 
 ```dart
-switch (cocktail.id) {
-  'tropical_chaos' => _drinks[0],
-  'sour_loser'     => _drinks[1],
-  'blue_regret'    => _drinks[2],
-  'bitter_defeat'  => _drinks[3],
-  _                => _drinks[0],       // silent default to tropical_chaos
-}
+score = Σ over candidate.pairingTags of (weights[tag] ?? 0.0) + 0.01
 ```
 
-But the catalog (see [services.md](services.md)) has different ids — `long_island`, `old_fashioned`, `mojito`, `zombie`. So today **every ML-chosen cocktail hits the default case** and the pumps always run the Tropical Chaos recipe. This drift is flagged in [known-issues.md](known-issues.md) — it is the highest-priority correctness bug in the ML pipeline.
+The `+0.01` base per tag keeps scores stable (and slightly favours tag-richer cocktails) when the profile emphasises none of a candidate's tags. `_labelsContain` lowercases everything and uses `String.contains`, so `"Tropical Rainforest"` matches `tropical`.
 
-## Tuning checklist
+These weights are **hand-picked, not learned**. To retune, edit `_moodWeights` / `_scoreByTags` directly — there is no config file. Because scoring is tag-based and pool-agnostic, adding cocktails needs no matcher change, as long as their tags come from `kMoodTags` (tags outside it contribute only the +0.01 base).
 
-When a designer asks for a "softer" cocktail recommendation:
+## From cocktail to pump amounts
 
-1. Adjust the relevant `_score*` thresholds in `google_ml_kit_cocktail_service.dart`.
-2. If you add a cocktail, add a `CocktailData` row to `data/cocktail_catalog.dart`, a `Drink` to `MockDrinkService._drinks`, a switch arm to `_mapCocktailToDrink`, and a `_score<NewName>` method called from the `scores` map in `selectCocktail`.
-3. Until the mapping bug is fixed (see [known-issues.md](known-issues.md)), `_mapCocktailToDrink` cases must match the catalog ids — not the `_drinks` ids.
+Two paths, both in `MockDrinkService.selectDrinkWithCocktail` (see [services.md](services.md)):
+
+- **Generated pool (primary):** the chosen `GeneratedCocktail` already carries its own `pumpAmounts`; `toDrink()` passes them straight through. No id mapping, no unit conversion.
+- **Fallback catalog:** when no pool exists, the chosen `CocktailData` id is mapped to a calibration `Drink` by `_mapCocktailToDrink` (`long_island → tropical_chaos`, `old_fashioned → sour_loser`, `mojito → blue_regret`, `zombie → bitter_defeat`). The switch arms match the catalog ids, so each catalog cocktail pours its intended calibration recipe (this was the ex-F-1 bug, now fixed).
+
+## Where the candidate pool comes from
+
+The pool the matcher scores is generated up front from the user's four pump ingredients — see the recipe-generation subsystem in [services.md](services.md) (`RecipeStore` + `RecipeGeneratorService` / Gemma). The generators are constrained to emit only `kMoodTags`, precisely so this matcher can score them. Keep [`mood_tags.dart`](../../code/frontend/lib/models/mood_tags.dart), the generator prompts, and the tag keys in `_moodWeights` in sync.
+
+## Testing
+
+[`test/services/cocktail_selection_test.dart`](../../code/frontend/test/services/cocktail_selection_test.dart) drives the matcher with a `_FakeAnalyzer` (fixed `ImageProfile`, no native ML Kit): a happy face favours fresh/happy-tagged candidates, a single-candidate pool is returned without analysis, and both the ML-Kit and mock services pick from the provided pool.

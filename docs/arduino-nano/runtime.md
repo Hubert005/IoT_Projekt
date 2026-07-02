@@ -12,7 +12,7 @@ From [`platformio.ini`](../../code/backend/code_arduino-nano/platformio.ini):
 | `board` | `nanoatmega328` |
 | `framework` | `arduino` |
 | `monitor_speed` | `115200` |
-| `build_flags` | `-D ARDUINO_USB_MODE=1`, `-D ARDUINO_USB_CDC_ON_BOOT=1` |
+| `build_flags` | `-D ARDUINO_USB_MODE=1`, `-D ARDUINO_USB_CDC_ON_BOOT=1` — copied from the ESP config; **no effect on AVR** |
 | `lib_deps` | `adafruit/Adafruit_VL53L0X@^1.2.5` — **declared but never `#include`d**; see [known-issues.md](known-issues.md). |
 
 ## Pin map
@@ -51,17 +51,19 @@ Drives one FET high for `duration` ms. Blocking. No PWM, no current monitoring, 
 3. Open `espSerial` at 9600.
 4. Print `"Serial Started"` on USB.
 
-### `loop()` — lines 38–84
+### `loop()` — lines 38–88
 
-For the visual flow see [sequence-diagrams.md](sequence-diagrams.md) §2 (idle poll) and §3 (mix happy path). Step-by-step (lines 40–79):
+For the visual flow see [sequence-diagrams.md](sequence-diagrams.md) §2 (idle poll), §3 (mix happy path) and §4 (parse failure). Step-by-step:
 
-1. **Receive** (40–47): poll `espSerial.available()`; on a frame, `readStringUntil('\n')`, `trim()`, and echo to USB (`Serial.println("Nano got: " + msg)`).
+1. **Receive** (40–47): poll `espSerial.available()`; on a frame, `readStringUntil('\n')`, `trim()`, and echo to USB (`Serial.println("Nano got: " + msg)`) if non-empty.
 2. **Filter** (50): only act when `msg.startsWith("mix_")`.
-3. **Parse** (51–62): strip the four-character `"mix_"` prefix, then loop four times, locating the next `_`, slicing the substring, and converting with `String::toInt()`. If any underscore is missing the function `return`s after `Serial.println("Invalid message format")`.
-4. **Drive pumps** (63–66): `pump(M0 + i, durations[i])` for `i ∈ {0,1,2,3}`. The arithmetic relies on `M0..M3` being consecutive pins 2..5 — change one and the loop breaks.
-5. **Acknowledge** (69): `espSerial.println("mix_ok")`.
-6. **Buzz** (72–78): two 250 ms tones with 50 ms silence between them.
-7. **Reset** (81): `msg = ""` so the next iteration starts clean.
+3. **Parse** (51–66): strip the four-character `"mix_"` prefix, then loop four times, locating the next `_` and converting the field with `String::toInt()`. The **last** field has no trailing `_`, so when `indexOf('_') == -1` on iteration `i == 3` the remainder of the string is taken as the value. If a `_` is missing before the last field (`indexOf == -1 && i < 3`), the Nano sends `mix_err` on `espSerial`, prints `"Invalid message format"` on USB, and `return`s without pumping.
+4. **Drive pumps** (68–70): `pump(M0 + i, durations[i])` for `i ∈ {0,1,2,3}`. The arithmetic relies on `M0..M3` being consecutive pins 2..5 — change one and the loop breaks.
+5. **Acknowledge** (73): `espSerial.println("mix_ok")`.
+6. **Buzz** (76–82): two 250 ms tones with 50 ms silence between them.
+7. **Reset** (85): `msg = ""` so the next iteration starts clean.
+
+The parser was rewritten relative to the earlier version: it now tolerates the missing trailing underscore on the fourth field, and it emits a `mix_err` NAK on malformed input instead of failing silently (previously [known-issue N-4](known-issues.md), now resolved).
 
 ## Wiring summary
 
@@ -74,4 +76,4 @@ From [`schaltplan/sketch_bom.html`](../../schaltplan/sketch_bom.html) the dispen
 
 ## Hardware-debug fast path
 
-Every UART message from the ESP is echoed to USB `Serial` (line 44–45). With `pio device monitor` you can confirm the Nano received a well-formed `mix_*` order without instrumenting the ESP. Malformed orders also surface as `"Invalid message format"` on USB.
+Every UART message from the ESP is echoed to USB `Serial` (line 44–45). With `pio device monitor` you can confirm the Nano received a well-formed `mix_*` order without instrumenting the ESP. Malformed orders also surface as `"Invalid message format"` on USB (and a `mix_err` on the UART back to the ESP).

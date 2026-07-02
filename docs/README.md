@@ -6,7 +6,7 @@ A Rock-Paper-Scissors drinking game spanning three independent codebases (Flutte
 
 ```mermaid
 graph LR
-    Phone[Flutter App<br/>BLE central<br/>+ Google ML Kit]
+    Phone[Flutter App<br/>BLE central<br/>+ Google ML Kit<br/>+ on-device LLM]
     ESP["ESP32-C3<br/>BLE peripheral (NUS)<br/>+ UART relay"]
     Nano[Arduino Nano<br/>pump driver]
 
@@ -16,7 +16,7 @@ graph LR
     Buttons[10 buttons B0..B9] --> ESP
 ```
 
-End-to-end flow: the app drives a best-of-three RPS series. The ESP samples the physical button matrix and reports each round's result over BLE. After the series, the app analyses the loser's selfie with ML Kit, picks a cocktail, and sends a pump recipe (`mix_a_b_c_d`) — the ESP relays it to the Nano, which drives the four pumps and confirms with `mix_ok`.
+End-to-end flow: the user enters the four drinks loaded in the pumps, and the app generates a pool of cocktails from them (on-device Gemma LLM, with a deterministic mock fallback). The app then drives a best-of-three RPS series; the ESP samples the physical button matrix and reports each round's result over BLE. After the series, the app analyses the loser's selfie with ML Kit, matches it to one cocktail from the generated pool, and sends its pump recipe (`mix_a_b_c_d`) — the ESP relays it to the Nano, which drives the four pumps and confirms with `mix_ok` (or `mix_err` on a malformed order).
 
 ## Where to start
 
@@ -48,17 +48,17 @@ docs/
 │   ├── protocol.md                  ← Nano's view of UART
 │   └── known-issues.md
 ├── frontend/                        ← Flutter app
-│   ├── README.md                    ← layered architecture
-│   ├── services.md                  ← BleService, BleBackend, BleMixer, mocks
-│   ├── features.md                  ← Home, Game (+ GamePhase state machine), Recipes
-│   ├── sequence-diagrams.md         ← startup, scan/connect, test mode, game init, play round, ML pipeline, order drink
-│   ├── ml-pipeline.md               ← ImageAnalyzer + cocktail scoring
+│   ├── README.md                    ← layered architecture + deps
+│   ├── services.md                  ← BLE stack, drink/cocktail/mixer, recipe-generation subsystem (RecipeStore, Gemma)
+│   ├── features.md                  ← Home (+ MIX RANDOM DRINK), Game (+ GamePhase + abort), Recipes (What's in the box)
+│   ├── sequence-diagrams.md         ← startup+model, scan/connect, test mode, recipe gen, photo, game init, play round, select/order drink
+│   ├── ml-pipeline.md               ← ImageAnalyzer + generic mood-weight cocktail matcher
 │   └── known-issues.md
 └── cross-dependencies/              ← the wire between them (interface-only)
     ├── README.md
     ├── protocol.md                  ← single source of truth for wire formats
     ├── sequence-diagrams.md         ← start handshake, one round, mix relay (wire frames only)
-    └── known-issues.md              ← consolidated bug table (E-*, N-*, F-*)
+    └── known-issues.md              ← consolidated bug table (E-*, N-*, F-*, X-*) + resolved log
 ```
 
 ## Source-of-truth precedence

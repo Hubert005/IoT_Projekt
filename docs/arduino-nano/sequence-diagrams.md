@@ -45,7 +45,7 @@ sequenceDiagram
     end
 ```
 
-The Nano never sends anything to `espSerial` unsolicited — every outbound UART frame is the ack to a `mix_*` command. Anything that does not start with `mix_` is silently dropped after the USB echo.
+Anything that does not start with `mix_` is silently dropped after the USB echo.
 
 ## 3 — Mix command — happy path
 
@@ -58,8 +58,8 @@ sequenceDiagram
     participant ESP as espSerial TX
     Note over Nano: msg startsWith "mix_"<br/>(main.cpp:50)
     Nano->>Nano: msg.remove(0, 4)
-    loop i = 0..3 (split on "_")
-        Nano->>Nano: durations[i] = substring.toInt()
+    loop i = 0..3 (split on "_", last field = remainder)
+        Nano->>Nano: durations[i] = field.toInt()
     end
     loop i = 0..3 (pump sequentially)
         Nano->>FET: digitalWrite(M0+i, HIGH)
@@ -71,7 +71,7 @@ sequenceDiagram
     Note over Nano: msg = "", back to idle (§2)
 ```
 
-Note that **`mix_ok` is emitted *before* the buzzer sequence** (lines 69 vs 72–78). The app's `BleMixerService.orderDrink` resolves while the buzzer is still beeping — the user sees "Drink ready" ~550 ms before the audible confirmation ends.
+Note that **`mix_ok` is emitted *before* the buzzer sequence** (line 73 vs 76–82). The app's `BleMixerService.orderDrink` resolves while the buzzer is still beeping — the user sees "Drink ready" ~550 ms before the audible confirmation ends.
 
 Total wall-clock time the Nano is unavailable for a typical recipe `mix_30_20_10_40`: ~100 ms pumping + ~550 ms buzzer ≈ 650 ms (see [`../cross-dependencies/protocol.md`](../cross-dependencies/protocol.md) for the full latency budget). The pumps run **blocking** via `delay()` ([known-issues.md §5](known-issues.md#5-pumps-run-blocking-in-sequence)).
 
@@ -81,18 +81,20 @@ Total wall-clock time the Nano is unavailable for a typical recipe `mix_30_20_10
 sequenceDiagram
     autonumber
     participant Nano as Nano loop
+    participant ESP as espSerial TX
     participant USB as USB Serial
-    Note over Nano: msg startsWith "mix_"<br/>but missing "_" separator
+    Note over Nano: msg startsWith "mix_"<br/>but a "_" separator is missing before field 4
     Nano->>Nano: msg.remove(0, 4)
     loop i = 0..3
         Nano->>Nano: indexOf('_')
-        alt found
+        alt found, or i == 3 (remainder)
             Note over Nano: parse next field
-        else underscoreIndex == -1
+        else underscoreIndex == -1 and i < 3
+            Nano->>ESP: espSerial.println("mix_err")
             Nano->>USB: "Invalid message format"
-            Note over Nano: return — no NAK on espSerial,<br/>no pumping, no mix_ok
+            Note over Nano: return — no pumping, no mix_ok
         end
     end
 ```
 
-The Nano does **not** send a NAK back to the ESP on parse failure ([known-issues.md §4](known-issues.md#4-no-nak-on-malformed-mix_)). Combined with the ESP's missing `listenCMD` timeout ([../esp32-c3/known-issues.md §3](../esp32-c3/known-issues.md#3-listencmd-blocks-forever-lines-4951)), one malformed frame from the app can hang both firmwares until power-cycle; the Flutter `waitForMessage` 60-second BLE timeout is the only existing safety net ([../frontend/known-issues.md F-6](../frontend/known-issues.md#f-6-ble-disconnect-during-game-leaves-ui-stuck)).
+The Nano now sends a `mix_err` NAK on parse failure (line 57) — previously it stayed silent (resolved [known-issues.md §4](known-issues.md)). The ESP reads this NAK but does **not** yet relay it to the app; combined with the ESP's 20 s `listenCMD` timeout, a malformed frame no longer hangs the firmware, but the app still relies on its own BLE timeout to notice. See [`../esp32-c3/known-issues.md` §3](../esp32-c3/known-issues.md).

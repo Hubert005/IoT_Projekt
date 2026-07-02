@@ -26,9 +26,9 @@ Three responsibilities, one game:
 
 | Codebase | Owns | Does not touch |
 |---|---|---|
-| Flutter app | Game state, ML inference, recipe → pump-amount mapping | Hardware buttons, pump GPIO |
+| Flutter app | Game state, on-device recipe generation, ML selfie matching, cocktail → pump-amount mapping | Hardware buttons, pump GPIO |
 | ESP32-C3 | BLE peripheral, button matrix, mix relay to Nano | Pumps, ML, recipes |
-| Arduino Nano | Pump GPIOs, buzzer | BLE, game logic, ML |
+| Arduino Nano | Pump GPIOs, buzzer, `mix_ok`/`mix_err` ack | BLE, game logic, ML |
 
 ## Pages in this folder
 
